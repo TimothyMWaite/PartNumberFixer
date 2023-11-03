@@ -1,0 +1,33 @@
+Current State and Roadmap for Item Options in Business Central
+Current State
+Item Table Extension: Fields added to the Item table for extended properties like PartNo.
+Intermediary Table: A separate table to hold additional item information and link between different parts of the system.
+Item Option Tables: Tables for storing item options and their attributes.
+Item Card Extension: A page extension on the Item Card to display and manage options.
+Installation Logic: Codeunits for handling installation-specific logic, like populating the intermediary table.
+To-Do List
+Option Management
+
+Create and manage options in a separate table.
+Add CRUD operations for options.
+Assembly and Options
+
+Create tables to manage assembly changes based on options selected.
+Logic to update assembly BOM dynamically based on options.
+User Interface
+
+Add UI elements to Item Card for displaying and selecting options.
+Add UI for managing assembly changes.
+Adding Options to Sales Line
+
+Extend Sales Line table to hold selected options.
+Update Sales Line UI for option display and selection.
+Backend logic to transfer options to Sales Line and update price & assembly.
+Validation and error handling for option selection in Sales Line.
+Testing & Validation
+
+Unit and integration tests for new features.
+Validate with end-users and iterate as needed.
+Deployment
+
+Update documentation and train users.

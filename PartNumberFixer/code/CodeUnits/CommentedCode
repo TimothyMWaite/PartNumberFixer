@@ -1,0 +1,42 @@
+
+                // trigger OnValidate()
+                // var
+                //     SalesHeaderRec: Record "Sales Quote Entity Buffer";
+                // begin
+                //     if SalesHeaderRec.Get(Rec."Document No.") then begin
+                //         if SalesHeaderRec."Bill-to Customer No." = '' then begin
+                //             Error('Please set the Bill-to Customer No. before proceeding.');
+                //         end else begin
+                //             Rec."Bill-to Customer No." := SalesHeaderRec."Bill-to Customer No.";
+                //         end;
+                //     end else begin
+                //         Error('Failed to get SalesHeaderRec with the provided Document No.');
+                //     end;
+                // end;
+                // trigger OnLookup(var Text: Text): Boolean
+
+
+                                    // LookupResult := CustomItemLookup.LookupItem(Rec);
+                    // if SalesHeaderRec.Get(Rec."Document No.") then begin
+                    //     if not Rec.ISEMPTY then begin
+                    //         if Rec.GET(Rec."Document Type", Rec."Document No.", Rec."Line No.") then begin
+                    //             if SalesHeaderRec."Bill-to Customer No." = '' then begin
+                    //                 Error('SalesHeaderRec."Bill-to Customer No." is empty.');
+                    //             end else begin
+                    //                 Rec."Bill-to Customer No." := SalesHeaderRec."Bill-to Customer No.";
+                    //                 Rec.Modify();
+                    //             end;
+                    //         end else begin
+                    //             Error('The record does not exist in the table.');
+                    //         end;
+                    //     end else begin
+                    //         Error('Rec is empty.');
+                    //     end;
+                    // end else begin
+                    //     Error('Failed to get SalesHeaderRec with the provided Document No.');
+                    // end;
+
+
+                    CustomItemLookup: Codeunit "Custom Item Lookup";
+                    SalesHeaderRec: Record "Sales Quote Entity Buffer";
+                    LookupResult: Boolean;
