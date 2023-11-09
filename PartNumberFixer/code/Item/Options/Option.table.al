@@ -93,17 +93,36 @@ table 50106 "Option"
         }
     }
 
-    // trigger OnInsert()
-    // var
-    //     oRec: Record Option;
-    // begin
-    //     if rec.id = 0 then begin
-    //         if oRec.FindLast() then begin
-    //             rec.Id := oRec.Id + 1;
-    //         end;
-    //     end;
+    trigger OnModify()
+    var
+        oRec: Record Option;
+        spl: Record SPList;
+    begin
+        if spl.Get(Format(ID) + "Prefix Designator") then begin
+            if "Prefix Designator" <> '' then begin
+                spl.ID := Format(ID) + "Prefix Designator";
+                spl.Designator := "Prefix Designator";
+                spl.Order := "Prefix Order";
+                spl.active := true;
+                spl.prefix := true;
+                spl.Modify();
+            end;
+        end else begin
+            if "Prefix Designator" <> '' then begin
+                spl.Init();
+                spl.ID := Format(ID) + "Prefix Designator";
+                spl.Designator := "Prefix Designator";
+                spl.Order := "Prefix Order";
+                spl.active := true;
+                spl.prefix := true;
+                if spl.Insert(true) then begin
+                    Message('ADDED PREFIX');
 
-    // end;
+                end;
+            end;
+        end;
+
+    end;
 
 
 }

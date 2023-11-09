@@ -16,6 +16,7 @@ controladdin CombinedControl
     // procedure CreateTable();
     procedure addControl();
     procedure updateValues(p: Text[500]; s: Text[500]);
+    procedure toggleCN();
     // procedure SetSamplePartNumber();
     event openAddOptions();
 }

@@ -3,6 +3,7 @@ page 50116 "Options Card"
     PageType = Card;
     SourceTable = "Option";
     AboutTitle = 'Option';
+    CardPageId = "Options Card";
     Caption = 'Option';
     ApplicationArea = All;
     Editable = true;
@@ -28,7 +29,12 @@ page 50116 "Options Card"
                         if not initialized then
                             initialize();
                         // CurrPage.OptionDesignatorsList.Page.initialize();
-                        // CurrPage.OptionDesignatorsList.Page.createCustomTable();
+                        if not tableSet then begin
+                            CurrPage.OptionDesignatorsList.Page.setOptionRec(rec);
+                            CurrPage.OptionDesignatorsList.Page.createCustomTable();
+                            CurrPage.OptionDesignatorsList.Page.setTableSet();
+                            tableSet := true;
+                        end;
                         // CurrPage.OptionDesignatorsList.Page.UpdateSamplePartNumber(rec);
                         // if not tableSet then begin
                         //     Message('InOPOT');
@@ -57,16 +63,8 @@ page 50116 "Options Card"
                     ApplicationArea = All;
                     Enabled = (rec.name <> '');
                 }
-                field("Port Specific"; Rec."Port Specific")
-                {
-                    ApplicationArea = All;
-                    Enabled = (rec.name <> '');
-                }
-                field("Number of Ports"; Rec."Number of Ports")
-                {
-                    Enabled = rec."Port Specific";
-                    ApplicationArea = All;
-                }
+
+
             }
             grid(Designators)
             {
@@ -89,9 +87,9 @@ page 50116 "Options Card"
                             if not initialized then
                                 initialize();
 
+                            addToList();
 
 
-                            CurrPage.OptionDesignatorsList.Page.updatePrefix(rec);
 
 
                         end;
@@ -106,30 +104,13 @@ page 50116 "Options Card"
                         begin
                             if not initialized then
                                 initialize();
+                            addToList();
 
-                            CurrPage.OptionDesignatorsList.Page.updatePrefix(rec);
 
-
-                        end;
-                    }
-
-                    field("Add Simple Connector"; Rec."Add Simple Connector")
-                    {
-                        ApplicationArea = All;
-                        Enabled = (rec.name <> '');
-                        trigger OnValidate()
-                        var
-
-                        begin
-                            if not initialized then
-                                initialize();
-
-                            // CurrPage.OptionDesignatorsList.Page.UpdateSamplePartNumber(Rec);
 
 
                         end;
                     }
-
                     field("Suffix Order"; Rec."Suffix Order")
                     {
                         ApplicationArea = All;
@@ -142,8 +123,9 @@ page 50116 "Options Card"
                                 initialize();
 
                             // CurrPage.OptionDesignatorsList.Page.updatePrefix(rec);
-                            CurrPage.OptionDesignatorsList.Page.updateSuffix(rec);
 
+                            CurrPage.OptionDesignatorsList.Page.setOptionRec(rec);
+                            CurrPage.OptionDesignatorsList.Page.updateOrder();
                         end;
                     }
 
@@ -212,7 +194,10 @@ page 50116 "Options Card"
         // CurrPage.Update();
     end;
 
+    trigger OnNextRecord(Steps: Integer): Integer
+    begin
 
+    end;
 
     procedure initialize()
     var
@@ -226,6 +211,7 @@ page 50116 "Options Card"
             end;
         end;
         CurrPage.OptionDesignatorsList.Page.setOptionRec(rec);
+
         CurrPage.Update();
         initialized := true;
     end;
@@ -239,6 +225,11 @@ page 50116 "Options Card"
         end else begin
             exit(0);
         end;
+    end;
+
+    trigger OnInsertRecord(BelowxRec: Boolean): Boolean
+    begin
+        addToList();
     end;
 
     trigger OnNewRecord(BelowxRec: Boolean)
@@ -258,11 +249,18 @@ page 50116 "Options Card"
     end;
 
     trigger OnClosePage()
+    var
+
+        sl: Record SPList;
     begin
         if rec.Name <> '' then begin
             rec.Validate(Name);
             rec.Modify();
             addToList();
+            if sl.Get(Format(rec.id) + rec."Prefix Designator") then begin
+                sl.active := false;
+                sl.Modify();
+            end;
         end else begin
 
             if rec.Delete(true) then begin
@@ -282,6 +280,7 @@ page 50116 "Options Card"
         if SPRec.Get(Format(rec.id) + rec."Prefix Designator") then begin
             SPRec.Designator := rec."Prefix Designator";
             SPRec.Order := rec."Prefix Order";
+            SPRec.active := true;
             SPRec.prefix := true;
             SPRec.Modify();
         end else begin
@@ -289,10 +288,11 @@ page 50116 "Options Card"
             SPRec.ID := format(rec.Id) + rec."Prefix Designator";
             SPRec.Designator := rec."Prefix Designator";
             SPRec.Order := rec."Prefix Order";
+            SPRec.active := true;
             SPRec.prefix := true;
             SPRec.OptionID := rec.Id;
             if not SPRec.Insert() then begin
-                Message('preINFail');
+
             end;
         end;
 
@@ -312,12 +312,13 @@ page 50116 "Options Card"
                     SPRec.OptionID := rec.Id;
                     SPRec.prefix := false;
                     if not SPRec.Insert() then begin
-                        Message('preINFail');
+
                     end;
                 end;
             until sRec.Next() = 0;
         end;
         sRec.Reset();
+        CurrPage.OptionDesignatorsList.Page.updateControl();
     end;
 
 
@@ -325,14 +326,7 @@ page 50116 "Options Card"
     var
         tableSet: Boolean;
         OptionMgt: Codeunit OptionCRUD;
-        optionRec: Record Option;
         initialized: Boolean;
-        SamplePartNumber: Text[100];
-        defaultPN: Text[20];
-        connectorType: Text[4];
-        AddSimpleConnector: Boolean;
-        TempPrefixTable: Record TempPrefixSuffix temporary;
-        TempSuffixTable: Record TempPrefixSuffix temporary;
-        MaxPrefixOrder: Integer;
-        MaxSuffixOrder: Integer;
+        showConn: Boolean;
+
 }
