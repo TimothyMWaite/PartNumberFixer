@@ -56,7 +56,8 @@ table 50102 "Item Option Line"
         field(8; "AssemblyOptionID"; Guid)
         {
             DataClassification = ToBeClassified;
-            TableRelation = "Option Assembly Header"."Option ID";
+            TableRelation = "Option Assembly Line".ID;
+
         }
 
         field(10; "Is General"; Boolean)

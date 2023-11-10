@@ -43,22 +43,12 @@ table 50106 "Option"
         {
             DataClassification = ToBeClassified;
         }
-
-        field(11; "Port Specific"; Boolean)
+        field(8; AssemblyId; text[50])
         {
             DataClassification = ToBeClassified;
+            
         }
 
-        field(12; "Number of Ports"; TableFilter)
-        {
-            DataClassification = ToBeClassified;
-            // OptionMembers = 1X1, S1X2,S1X4,S1X8,S1X16,S1X32;
-            // OptionCaption = '3,5,9,17,33';
-        }
-        field(16; ListOrYesNo; Boolean)
-        {
-            DataClassification = ToBeClassified;
-        }
         field(100; "Prefix Designator"; Text[10])
         {
             DataClassification = ToBeClassified;
@@ -68,14 +58,6 @@ table 50106 "Option"
             DataClassification = ToBeClassified;
         }
         field(102; "Suffix Order"; Integer)
-        {
-            DataClassification = ToBeClassified;
-        }
-        field(103; "Add Simple Connector"; Boolean)
-        {
-            DataClassification = ToBeClassified;
-        }
-        field(104; hidePreview; Boolean)
         {
             DataClassification = ToBeClassified;
         }

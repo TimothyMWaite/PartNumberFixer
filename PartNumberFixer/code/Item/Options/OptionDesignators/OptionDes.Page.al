@@ -43,6 +43,16 @@ page 50118 "Option Suffixs"
                 {
                     ApplicationArea = All;
                     Enabled = (Rec."Suffix Designator" <> '');
+                    TableRelation = "Option Assembly Line".ID;
+                    Lookup = false;
+                    DrillDown = true;
+                    DrillDownPageId = "Option Assembly List";
+
+                    trigger OnDrillDown()
+                    begin
+                        rec.AssemblyChange := runAssemblyList(false, optionRec);
+                        rec.Modify();
+                    end;
                 }
                 field("Active"; Rec.show)
                 {
@@ -181,6 +191,50 @@ page 50118 "Option Suffixs"
         end;
 
         updateControl();
+    end;
+
+    procedure runAssemblyList(pre: Boolean; oRec: Record Option): Text[50]
+    var
+        OAPage: Page "Option Assembly List";
+        ARec: Record "Option Assembly Line";
+    begin
+
+        if pre then begin
+            if ARec.get(Format(oRec.Id) + oRec."Prefix Designator" + '1') then begin
+                OAPage.SetTableView(ARec);
+            end else begin
+                ARec.Init();
+                ARec.ID := Format(oRec.Id) + oRec."Prefix Designator" + '1';
+                ARec."Option ID" := oRec.Id;
+                ARec."Line No." := 1;
+                ARec.Designator := oRec."Prefix Designator";
+                ARec.Insert();
+                OAPage.SetTableView(ARec);
+            end;
+
+        end else begin
+            if ARec.get(Format(oRec.Id) + rec."Suffix Designator" + '1') then begin
+                OAPage.SetTableView(ARec);
+
+            end else begin
+                ARec.Init();
+                ARec.ID := Format(oRec.Id) + rec."Suffix Designator" + '1';
+                ARec."Option ID" := oRec.Id;
+                ARec.Designator := rec."Suffix Designator";
+                ARec."Line No." := 1;
+                ARec.Insert();
+                OAPage.SetTableView(ARec);
+            end;
+        end;
+        if not pre then
+            rec.AssemblyChange := ARec.ID;
+        Commit();
+        if OAPage.RunModal = Action::OK then begin
+
+            rec.Modify();
+            if pre then
+                exit(ARec.ID);
+        end;
     end;
 
     procedure updateOrder()

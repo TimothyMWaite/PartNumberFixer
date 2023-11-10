@@ -111,6 +111,23 @@ page 50116 "Options Card"
 
                         end;
                     }
+                    field("Assembly Change for Prefix"; rec.AssemblyId)
+                    {
+                        ApplicationArea = all;
+                        TableRelation = "Option Assembly Line".ID;
+                        Lookup = false;
+                        DrillDown = true;
+                        DrillDownPageId = "Option Assembly List";
+
+                        trigger OnDrillDown()
+                        begin
+                            rec.AssemblyId := CurrPage.OptionDesignatorsList.Page.runAssemblyList(true, rec);
+                            rec.Modify();
+                        end;
+
+
+
+                    }
                     field("Suffix Order"; Rec."Suffix Order")
                     {
                         ApplicationArea = All;

@@ -26,7 +26,7 @@ table 50112 "Option Suffix"
         {
             DataClassification = ToBeClassified;
         }
-        field(11; AssemblyChange; Code[20])
+        field(11; AssemblyChange; Text[50])
         {
             DataClassification = ToBeClassified;
         }
