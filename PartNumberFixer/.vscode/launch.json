@@ -7,7 +7,7 @@
       "type": "al",
       "environmentType": "Sandbox",
       "environmentName": "ProductionCopy",
-      "startupObjectId": 50123,
+      "startupObjectId": 22,
       "startupObjectType": "Page",
       "breakOnError": "All",
       "launchBrowser": true,

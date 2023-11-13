@@ -15,24 +15,35 @@ page 50115 "Option SubList"
                 {
                     ApplicationArea = All;
                     Editable = false;
+                    TableRelation = Item."No.";
+                    Enabled = rec.OptionName <> '';
+                }
+                field(OptionName; Rec.OptionName)
+                {
+                    ApplicationArea = All;
+                    TableRelation = Option.Name;
                 }
                 field("Line No."; rec."Line No.")
                 {
                     ApplicationArea = All;
                     Visible = false;
+                    Enabled = rec.OptionName <> '';
                 }
                 field(Caption; rec.Caption)
                 {
                     ApplicationArea = All;
+                    Enabled = rec.OptionName <> '';
                 }
                 field(Required; rec.Required)
                 {
                     ApplicationArea = All;
+                    Enabled = rec.OptionName <> '';
                 }
 
                 field("Price Change"; rec."Price Change")
                 {
                     ApplicationArea = All;
+                    Enabled = rec.OptionName <> '';
                 }
             }
         }
