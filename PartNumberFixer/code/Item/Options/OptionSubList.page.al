@@ -29,35 +29,8 @@ page 50115 "Option SubList"
                 {
                     ApplicationArea = All;
                 }
-                field("Option Designator"; rec."Option Designator")
-                {
-                    ApplicationArea = All;
-                }
-                field("Designator Order"; rec."Designator Order")
-                {
-                    ApplicationArea = All;
-                }
-                field("Add To Front"; rec."Add To Front")
-                {
-                    ApplicationArea = All;
-                }
+
                 field("Price Change"; rec."Price Change")
-                {
-                    ApplicationArea = All;
-                }
-                field("AssemblyOptionID"; rec."AssemblyOptionID")
-                {
-                    ApplicationArea = All;
-                }
-                field("Is General"; rec."Is General")
-                {
-                    ApplicationArea = All;
-                }
-                field("Port Specific"; rec."Port Specific")
-                {
-                    ApplicationArea = All;
-                }
-                field("Number of Ports"; rec."Number of Ports")
                 {
                     ApplicationArea = All;
                 }
@@ -78,15 +51,17 @@ page 50115 "Option SubList"
     begin
         if Rec."ItemNo." <> '' then begin
             if ItemRec.Get(Rec."ItemNo.") then
-                Message('Linked Item No: %1', ItemRec."No.");
+                iRec := ItemRec;
         end;
     end;
 
     procedure setItemNum(i: Record Item)
     begin
         rec."ItemNo." := i."No.";
-        Message('Linked Item No through call: %1', i."No.");
+        // Message('Linked Item No through call: %1', i."No.");
         CurrPage.Update();
     end;
 
+    var
+        iRec: Record Item;
 }

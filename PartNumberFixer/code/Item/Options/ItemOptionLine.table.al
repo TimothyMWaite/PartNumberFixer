@@ -4,7 +4,11 @@ table 50102 "Item Option Line"
 
     fields
     {
-        field(1; "OptionName"; Text[50])
+        field(11; LineID; Text[220])
+        {
+            DataClassification = ToBeClassified;
+        }
+        field(1; "OptionName"; Text[200])
         {
             DataClassification = ToBeClassified;
             TableRelation = "Option"."Name";
@@ -14,16 +18,12 @@ table 50102 "Item Option Line"
             DataClassification = ToBeClassified;
             TableRelation = Item."No.";
         }
-        field(33; "PartNo"; Code[20])
+        field(111; "Line No."; Integer)
         {
             DataClassification = ToBeClassified;
-            TableRelation = "Intermediary Part Table".PartNo;
+            AutoIncrement = true;
         }
-        field(111; "Line No."; Code[20])
-        {
-            DataClassification = ToBeClassified;
-        }
-        field(2; Caption; Text[50])
+        field(2; Caption; Text[200])
         {
             DataClassification = ToBeClassified;
         }
@@ -32,45 +32,7 @@ table 50102 "Item Option Line"
         {
             DataClassification = ToBeClassified;
         }
-
-        field(4; "Option Designator"; Text[10])
-        {
-            DataClassification = ToBeClassified;
-        }
-
-        field(5; "Designator Order"; Integer)
-        {
-            DataClassification = ToBeClassified;
-        }
-
-        field(6; "Add To Front"; Boolean)
-        {
-            DataClassification = ToBeClassified;
-        }
-
         field(7; "Price Change"; Decimal)
-        {
-            DataClassification = ToBeClassified;
-        }
-
-        field(8; "AssemblyOptionID"; Guid)
-        {
-            DataClassification = ToBeClassified;
-            TableRelation = "Option Assembly Line".ID;
-
-        }
-
-        field(10; "Is General"; Boolean)
-        {
-            DataClassification = ToBeClassified;
-        }
-
-        field(11; "Port Specific"; Boolean)
-        {
-            DataClassification = ToBeClassified;
-        }
-
-        field(12; "Number of Ports"; Integer)
         {
             DataClassification = ToBeClassified;
         }
@@ -94,7 +56,6 @@ table 50102 "Item Option Line"
 
     procedure setNos(i: Record Item)
     begin
-        rec.PartNo := i.PartNo;
         rec."ItemNo." := i."No.";
     end;
 }

@@ -45,7 +45,7 @@ page 50104 "Intermediary Part List"
                 var
                     MyInstallCodeunit: Codeunit "My Install Codeunit";
                 begin
-                    Message('Refreshing');
+                    // Message('Refreshing');
                     MyInstallCodeunit.PopulateIntermediaryTable();
                     CurrPage.UPDATE; // Refresh the page to show the changes
                 end;

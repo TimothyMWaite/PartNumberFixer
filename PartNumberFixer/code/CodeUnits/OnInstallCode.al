@@ -23,6 +23,7 @@ codeunit 50103 "My Install Codeunit"
 
                         ItemRec.PartNo := ItemRec."No.";
                         ItemRec.Modify();
+
                     end;
                     IntermediaryPartRec."PartNo" := ItemRec."PartNo";
                     IntermediaryPartRec."Item ID" := ItemRec."No.";
@@ -31,6 +32,7 @@ codeunit 50103 "My Install Codeunit"
                     IntermediaryPartRec.Insert();
                 end;
             until ItemRec.Next = 0;
+        addCCtoAssembly();
         IntermediaryPartRec.SETCURRENTKEY("PartNo");
         IntermediaryPartRec.ASCENDING(TRUE);
     end;
@@ -88,6 +90,24 @@ codeunit 50103 "My Install Codeunit"
             SPRec.Designator := OptionRec."Prefix Designator";
             // Set other fields as necessary
             SPRec.Insert();
+        end;
+    end;
+
+    procedure addCCtoAssembly()
+    var
+        iRec: Record Item;
+        aRec: Record "BOM Component";
+    begin
+        aRec.Reset();
+        if aRec.FindSet() then begin
+            repeat
+                if iRec.get(aRec."No.") then begin
+
+                    aRec.ccID := iRec."Item Category Id";
+                    aRec.catagory := iRec."Item Category Code";
+                    aRec.Modify();
+                end;
+            until aRec.Next() = 0;
         end;
     end;
 
