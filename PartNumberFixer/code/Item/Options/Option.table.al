@@ -46,7 +46,7 @@ table 50106 "Option"
         field(8; AssemblyId; text[50])
         {
             DataClassification = ToBeClassified;
-            
+
         }
 
         field(100; "Prefix Designator"; Text[10])
@@ -65,7 +65,7 @@ table 50106 "Option"
 
     keys
     {
-        key(PK; "Id")
+        key(PK; "Id", Name)
         {
             Clustered = true;
         }

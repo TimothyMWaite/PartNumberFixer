@@ -23,26 +23,26 @@ pageextension 50100 ItemCardExt extends "Item Card"
                     UpdatePropagation = SubPart;
 
                     // You can set SubPageLink to link this part with the Item Card
-                    // SubPageLink = "ItemNo." = field("No.");
+                    SubPageLink = "ItemNo." = field("No.");
                 }
             }
         }
     }
-    trigger OnOpenPage()
-    var
-        ItemOptionsPart: Page "Option SubList";
-    begin
+    // trigger OnOpenPage()
+    // var
+    //     ItemOptionsPart: Page "Option SubList";
+    // begin
 
-        CurrPage.ItemOptionsPart.Page.setItemNum(rec);
-    end;
+    //     // CurrPage.ItemOptionsPart.Page.setItemNum(rec);
+    // end;
 
-    trigger OnNewRecord(BelowxRec: Boolean)
-    var
-        IO: Codeunit ItemOptions;
-    begin
-        if rec."No." <> '' then
-            IO.setItemRecord(rec);
-    end;
+    // trigger OnNewRecord(BelowxRec: Boolean)
+    // var
+    //     IO: Codeunit ItemOptions;
+    // begin
+    //     if rec."No." <> '' then
+    //         IO.setItemRecord(rec);
+    // end;
 
 
 
