@@ -37,13 +37,21 @@ table 50102 "Item Option Line"
         {
             DataClassification = ToBeClassified;
         }
+        field(8; lID; Text[50])
+        {
+            DataClassification = ToBeClassified;
+        }
     }
 
     keys
     {
-        key(PK; "ItemNo.")
+        key(PK; lID)
         {
             Clustered = true;
+
+        }
+        key(SK; "ItemNo.")
+        {
         }
     }
     trigger OnInsert()

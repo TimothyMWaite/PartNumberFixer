@@ -11,6 +11,11 @@ page 50115 "Option SubList"
         {
             repeater(Group)
             {
+                field("LID"; rec.lID)
+                {
+                    ApplicationArea = All;
+
+                }
                 field("Line No."; rec."Line No.")
                 {
                     ApplicationArea = All;
@@ -30,18 +35,32 @@ page 50115 "Option SubList"
                     ApplicationArea = All;
                     TableRelation = Option.Name;
                     Lookup = true;
+                    LookupPageId = OptionList;
                     DrillDown = true;
                     trigger OnValidate()
                     var
                         oRec: Record Option;
+                        lRec: Record "Item Option Line";
                     begin
+                        // updateLineNo(bxR);
+                        // updateItemNo();
+
                         oRec.Reset();
                         oRec.SetFilter(Name, rec.OptionName);
                         if oRec.FindFirst() then begin
                             rec.OptionID := oRec.Id;
-                            if not rec.Insert(false) then
-                                rec.Modify(false);
                         end;
+                        // if not inserted then begin
+                        //     rec.Insert();
+                        //     inserted := true;
+                        // end else begin
+                        lRec.Reset();
+                        m();
+                        if rec."ItemNo." = '' then begin
+                            rec."ItemNo." := iRec."No.";
+                        end;
+                        updateLID();
+
                     end;
                 }
 
@@ -80,57 +99,42 @@ page 50115 "Option SubList"
             }
         }
     }
-    trigger OnInit()
-    begin
-        m('Init');
-    end;
 
-    trigger OnInsertRecord(BelowxRex: Boolean): Boolean
-    var
-    begin
-        m('Insert');
-    end;
 
     trigger OnNewRecord(BelowxRec: Boolean)
     begin
-        m('new')
+
+        bxR := BelowxRec;
+
     end;
 
-    trigger OnModifyRecord(): Boolean
+
+
+
+    procedure updateItemNo(): Boolean
     begin
-        m('Mod');
+        if iRec."No." = '' then begin
+            rec."ItemNo." := xRec."ItemNo.";
+            exit(true);
+        end else begin
+
+            rec."ItemNo." := iRec."No.";
+
+            exit(false);
+        end;
+
     end;
-    // trigger OnOpenPage()
+
+    // procedure updateLineNo(bXRec: Boolean)
     // var
-    //     ItemRec: Record Item;
-    // begin
 
-    //     if Rec."ItemNo." <> '' then begin
-    //         if ItemRec.Get(Rec."ItemNo.") then
-    //             iRec := ItemRec;
-    //     end;
-    // end;
-
-    // trigger OnNewRecord(BelowxRec: Boolean)
     // begin
-    //     if BelowxRec then begin
+    //     if bXRec then begin
     //         rec."Line No." := rec."Line No." + 1;
-    //         if (rec."ItemNo." = '') AND (xRec."ItemNo." <> '') then begin
-    //             rec."ItemNo." := xRec."ItemNo.";
-    //         end;
-    //         setID();
     //     end else begin
     //         rec."Line No." := 1;
-    //         setID();
     //     end;
     // end;
-
-    procedure setItemNum(i: Record Item)
-    begin
-        rec."ItemNo." := i."No.";
-        // Message('Linked Item No through call: %1', i."No.");
-        CurrPage.Update();
-    end;
 
     procedure m()
     var
@@ -145,13 +149,15 @@ page 50115 "Option SubList"
             '\Caption: %6' +
             '\Required: %7' +
             '\Price Change: %8',
+            '\LID: %9',
             ItemOptionLine.OptionName,
             ItemOptionLine.OptionID,
             ItemOptionLine."ItemNo.",
             ItemOptionLine."Line No.",
             ItemOptionLine.Caption,
             ItemOptionLine.Required,
-            ItemOptionLine."Price Change"
+            ItemOptionLine."Price Change",
+            ItemOptionLine.lID
         );
     end;
 
@@ -180,6 +186,34 @@ page 50115 "Option SubList"
         );
     end;
 
+    procedure setItem(i: Record Item)
+    begin
+        iRec := i;
+    end;
+
+    procedure updateLID()
+    begin
+        count += 1;
+        if rec."ItemNo." = '' then
+            updateItemNo();
+        rec.lID := rec."ItemNo." + '-' + format(count);
+        save();
+    end;
+
+    procedure save()
+    var
+        lRec: Record "Item Option Line";
+    begin
+        if lRec.Get(rec."ItemNo." + ' ' + Format(count)) then begin
+            rec.Modify(false);
+
+        end else begin
+            rec.Insert(false);
+        end;
+    end;
+
     var
         iRec: Record Item;
+        count: Integer;
+        bxR, inserted, initialized : Boolean;
 }

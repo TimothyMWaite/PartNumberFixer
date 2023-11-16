@@ -20,9 +20,6 @@ pageextension 50100 ItemCardExt extends "Item Card"
                     ApplicationArea = All;
                     Enabled = (rec."No." <> '');
                     Editable = (rec."No." <> '');
-                    UpdatePropagation = SubPart;
-
-                    // You can set SubPageLink to link this part with the Item Card
                     SubPageLink = "ItemNo." = field("No.");
                 }
             }
@@ -44,10 +41,14 @@ pageextension 50100 ItemCardExt extends "Item Card"
     //         IO.setItemRecord(rec);
     // end;
 
-
+    trigger OnOpenPage()
+    begin
+        CurrPage.ItemOptionsPart.Page.setItem(rec);
+    end;
 
     procedure getCurrentRec(): Record Item
     begin
         exit(rec);
     end;
+
 }
