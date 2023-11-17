@@ -37,31 +37,7 @@ page 50115 "Option SubList"
                     Lookup = true;
                     LookupPageId = OptionList;
                     DrillDown = true;
-                    trigger OnValidate()
-                    var
-                        oRec: Record Option;
-                        lRec: Record "Item Option Line";
-                    begin
-                        // updateLineNo(bxR);
-                        // updateItemNo();
 
-                        oRec.Reset();
-                        oRec.SetFilter(Name, rec.OptionName);
-                        if oRec.FindFirst() then begin
-                            rec.OptionID := oRec.Id;
-                        end;
-                        // if not inserted then begin
-                        //     rec.Insert();
-                        //     inserted := true;
-                        // end else begin
-                        lRec.Reset();
-                        m();
-                        if rec."ItemNo." = '' then begin
-                            rec."ItemNo." := iRec."No.";
-                        end;
-                        updateLID();
-
-                    end;
                 }
 
                 field(Caption; rec.Caption)
@@ -101,40 +77,11 @@ page 50115 "Option SubList"
     }
 
 
-    trigger OnNewRecord(BelowxRec: Boolean)
-    begin
-
-        bxR := BelowxRec;
-
-    end;
 
 
 
 
-    procedure updateItemNo(): Boolean
-    begin
-        if iRec."No." = '' then begin
-            rec."ItemNo." := xRec."ItemNo.";
-            exit(true);
-        end else begin
 
-            rec."ItemNo." := iRec."No.";
-
-            exit(false);
-        end;
-
-    end;
-
-    // procedure updateLineNo(bXRec: Boolean)
-    // var
-
-    // begin
-    //     if bXRec then begin
-    //         rec."Line No." := rec."Line No." + 1;
-    //     end else begin
-    //         rec."Line No." := 1;
-    //     end;
-    // end;
 
     procedure m()
     var
@@ -188,27 +135,22 @@ page 50115 "Option SubList"
 
     procedure setItem(i: Record Item)
     begin
+        if not initialized then begin
+            rec.init();
+            initialized := true;
+        end;
         iRec := i;
+        rec."ItemNo." := i."No.";
     end;
 
-    procedure updateLID()
+    trigger OnAfterGetCurrRecord()
     begin
-        count += 1;
-        if rec."ItemNo." = '' then
-            updateItemNo();
-        rec.lID := rec."ItemNo." + '-' + format(count);
-        save();
-    end;
+        if rec."ItemNo." = '' then begin
+            if iRec."No." = '' then begin
+            rec."ItemNo." := xRec."ItemNo.";
 
-    procedure save()
-    var
-        lRec: Record "Item Option Line";
-    begin
-        if lRec.Get(rec."ItemNo." + ' ' + Format(count)) then begin
-            rec.Modify(false);
-
-        end else begin
-            rec.Insert(false);
+            end;
+            rec."ItemNo." := iRec."No.";
         end;
     end;
 

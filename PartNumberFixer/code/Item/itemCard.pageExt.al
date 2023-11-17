@@ -21,6 +21,7 @@ pageextension 50100 ItemCardExt extends "Item Card"
                     Enabled = (rec."No." <> '');
                     Editable = (rec."No." <> '');
                     SubPageLink = "ItemNo." = field("No.");
+
                 }
             }
         }
@@ -40,7 +41,6 @@ pageextension 50100 ItemCardExt extends "Item Card"
     //     if rec."No." <> '' then
     //         IO.setItemRecord(rec);
     // end;
-
     trigger OnOpenPage()
     begin
         CurrPage.ItemOptionsPart.Page.setItem(rec);

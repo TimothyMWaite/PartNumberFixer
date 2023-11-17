@@ -22,7 +22,7 @@ table 50102 "Item Option Line"
         field(111; "Line No."; Integer)
         {
             DataClassification = ToBeClassified;
-            AutoIncrement = true;
+            // AutoIncrement = true;
         }
         field(2; Caption; Text[200])
         {
@@ -45,7 +45,7 @@ table 50102 "Item Option Line"
 
     keys
     {
-        key(PK; lID)
+        key(PK; "Line No.")
         {
             Clustered = true;
 
@@ -54,19 +54,15 @@ table 50102 "Item Option Line"
         {
         }
     }
+
+
     trigger OnInsert()
-    var
-        iRec: Record Item;
-        IO: Codeunit ItemOptions;
     begin
-        iRec := IO.getItemRecord();
-        setNos(iRec);
-    end;
 
 
+        // Concatenate ItemNo and LineNo to form lID
 
-    procedure setNos(i: Record Item)
-    begin
-        rec."ItemNo." := i."No.";
+        lID := "ItemNo." + '-' + Format("Line No.");
+        // Modify is not needed here as this is an OnInsert trigger
     end;
 }
