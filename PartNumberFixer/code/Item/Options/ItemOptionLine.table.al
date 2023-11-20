@@ -22,7 +22,7 @@ table 50102 "Item Option Line"
         field(111; "Line No."; Integer)
         {
             DataClassification = ToBeClassified;
-            // AutoIncrement = true;
+            AutoIncrement = true;
         }
         field(2; Caption; Text[200])
         {
@@ -37,7 +37,7 @@ table 50102 "Item Option Line"
         {
             DataClassification = ToBeClassified;
         }
-        field(8; lID; Text[50])
+        field(8; lID; Integer)
         {
             DataClassification = ToBeClassified;
         }
@@ -45,7 +45,7 @@ table 50102 "Item Option Line"
 
     keys
     {
-        key(PK; "Line No.")
+        key(PK; "lID")
         {
             Clustered = true;
 
@@ -54,15 +54,4 @@ table 50102 "Item Option Line"
         {
         }
     }
-
-
-    trigger OnInsert()
-    begin
-
-
-        // Concatenate ItemNo and LineNo to form lID
-
-        lID := "ItemNo." + '-' + Format("Line No.");
-        // Modify is not needed here as this is an OnInsert trigger
-    end;
 }

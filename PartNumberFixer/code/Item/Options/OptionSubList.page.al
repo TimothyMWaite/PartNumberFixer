@@ -35,9 +35,24 @@ page 50115 "Option SubList"
                     ApplicationArea = All;
                     TableRelation = Option.Name;
                     Lookup = true;
-                    LookupPageId = OptionList;
                     DrillDown = true;
+                    DrillDownPageId = "OptionList";
 
+                    trigger OnAfterLookup(r: RecordRef)
+                    var
+                        oRec: Record Option;
+                    begin
+                        r.SetTable(oRec);
+                        if oRec.Get() then begin
+                            rec.OptionID := oRec.Id;
+                            rec.OptionName := oRec.Name;
+                        end;
+                        if rec."ItemNo." = '' then begin
+                            updateINo();
+                        end else begin
+                            addOrMod();
+                        end;
+                    end;
                 }
 
                 field(Caption; rec.Caption)
@@ -73,9 +88,21 @@ page 50115 "Option SubList"
                 end;
 
             }
+            action(viewTable)
+            {
+                trigger OnAction()
+                var
+                IOPage: Page "Option SubList";
+                begin
+                    if IOPage.RunModal = Action::OK then begin
+
+                        
+                    end;
+                end;
+
+            }
         }
     }
-
 
 
 
@@ -135,22 +162,47 @@ page 50115 "Option SubList"
 
     procedure setItem(i: Record Item)
     begin
-        if not initialized then begin
-            rec.init();
-            initialized := true;
-        end;
         iRec := i;
-        rec."ItemNo." := i."No.";
+    end;
+
+    trigger OnOpenPage()
+    var
+        lRec: Record "Item Option Line";
+    begin
+        if lRec.FindLast() then begin
+            rec.lID := lRec.lID + 1;
+        end else begin
+            rec.lID := 100;
+        end;
+        updateINo();
+    end;
+
+    procedure updateINo()
+    begin
+        if iRec."No." <> '' then begin
+            rec."ItemNo." := iRec."No."
+        end;
+        addOrMod();
+
     end;
 
     trigger OnAfterGetCurrRecord()
     begin
-        if rec."ItemNo." = '' then begin
-            if iRec."No." = '' then begin
-            rec."ItemNo." := xRec."ItemNo.";
+        updateINo();
+    end;
 
-            end;
-            rec."ItemNo." := iRec."No.";
+    trigger OnNewRecord(bxrec: Boolean)
+    var
+    begin
+        rec.lID := xRec.lID + 1;
+    end;
+
+    procedure addOrMod()
+    var
+        lRec: Record "Item Option Line";
+    begin
+        if not lRec.Get(rec.lID) then begin
+            rec.Insert();
         end;
     end;
 
