@@ -338,7 +338,10 @@ page 50116 "Options Card"
         CurrPage.OptionDesignatorsList.Page.updateControl();
     end;
 
-
+    procedure getRec(): Record Option
+    begin
+        exit(Rec);
+    end;
 
     var
         tableSet: Boolean;

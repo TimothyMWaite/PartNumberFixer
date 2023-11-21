@@ -46,4 +46,8 @@ page 50123 OptionList
             }
         }
     }
+    procedure getRec(): Record Option
+    begin
+        exit(rec);
+    end;
 }

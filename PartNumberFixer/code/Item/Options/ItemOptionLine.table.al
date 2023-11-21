@@ -54,4 +54,15 @@ table 50102 "Item Option Line"
         {
         }
     }
+    trigger OnInsert()
+    var
+        lRec: Record "Item Option Line";
+    begin
+        if lRec.FindLast() then begin
+            lID := lRec.lID + 1;
+
+        end else begin
+            lID := 100;
+        end;
+    end;
 }

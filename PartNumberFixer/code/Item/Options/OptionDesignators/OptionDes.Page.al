@@ -139,9 +139,11 @@ page 50118 "Option Suffixs"
     procedure updateControl()
     begin
 
+        if tableSet then begin
 
-        CurrPage.CombinedControl.updateValues(MyModalPage.getPreText(optionRec.Id), MyModalPage.getSufText(optionRec.Id));
-        Clear(MyModalPage);
+            CurrPage.CombinedControl.updateValues(MyModalPage.getPreText(optionRec.Id), MyModalPage.getSufText(optionRec.Id));
+            Clear(MyModalPage);
+        end;
     end;
 
     procedure createCustomTable()
@@ -230,10 +232,12 @@ page 50118 "Option Suffixs"
             rec.AssemblyChange := ARec.ID;
         Commit();
         if OAPage.RunModal = Action::OK then begin
+            if rec."Suffix Designator" <> '' then begin
 
-            rec.Modify();
-            if pre then
-                exit(ARec.ID);
+                rec.Modify();
+                if pre then
+                    exit(ARec.ID);
+            end;
         end;
     end;
 
