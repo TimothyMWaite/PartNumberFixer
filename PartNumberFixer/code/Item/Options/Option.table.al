@@ -74,7 +74,6 @@ table 50106 "Option"
 
         }
     }
-
     trigger OnModify()
     var
         oRec: Record Option;

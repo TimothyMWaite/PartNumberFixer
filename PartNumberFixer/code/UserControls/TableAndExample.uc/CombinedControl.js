@@ -1,5 +1,5 @@
 let samplePN = 'LDCBS1X2'; // Global variable for Sample Part Number
-var pre, suf;
+var pre = '', suf = '';
 var cn = '-TNC';
 var showCN = false;
 function updateSamplePN() {

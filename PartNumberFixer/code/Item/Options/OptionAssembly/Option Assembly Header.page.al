@@ -79,6 +79,17 @@ page 50121 "Option Assembly List"
                     Caption = 'Qty Based On Connectors?';
                     ToolTip = 'Specifies if per Connector.';
                 }
+                field(replacePart;Rec.replacePart)
+                {
+                    Caption = 'Replace a Part?';
+                    ApplicationArea = All;
+                    
+                }
+                field(Replace; rec.replaceType){
+                    ApplicationArea = All;
+                    TableRelation = "BOM Component".catagory;
+                    
+                }
                 // Add additional fields here if necessary
             }
         }

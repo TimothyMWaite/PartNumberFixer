@@ -128,7 +128,7 @@ page 50118 "Option Suffixs"
 
             tableSet := true;
         end;
-        rec.show := false;
+
     end;
 
     procedure toggleCN()
@@ -289,7 +289,7 @@ page 50118 "Option Suffixs"
     var
         optionRec: Record Option;
         TempRec: Record SPList temporary;
-        tableSet: Boolean;
+        tableSet, f : Boolean;
         MyModalPage: Page "SPList";
 
 

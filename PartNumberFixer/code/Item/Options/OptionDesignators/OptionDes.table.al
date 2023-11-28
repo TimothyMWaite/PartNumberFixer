@@ -16,6 +16,7 @@ table 50112 "Option Suffix"
         field(7; Line; Integer)
         {
             DataClassification = ToBeClassified;
+            AutoIncrement = true;
         }
         field(9; OptionID; Integer)
         {

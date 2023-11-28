@@ -43,6 +43,14 @@ table 50121 "Option Assembly Line"
         {
             DataClassification = ToBeClassified;
         }
+        field(11; replacePart; Boolean)
+        {
+            DataClassification = ToBeClassified;
+        }
+        field(9; replaceType; code[20])
+        {
+            DataClassification = ToBeClassified;
+        }
 
         // Additional Fields
     }
