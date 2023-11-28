@@ -99,14 +99,9 @@ page 50115 "Option SubList"
                     oCrud: Codeunit OptionCRUD;
                 begin
 
-                    oRec.Init();
-                    if oldRec.FindLast() then
-                        oRec.Id := oldRec.Id + 1
-                    else
-                        oRec.Id := 100;
 
 
-                    oPage.SetRecord(oRec);
+
                     // oPage.initialize();
                     oPage.Run();
                     // if oPage.RunModal = Action::OK then begin

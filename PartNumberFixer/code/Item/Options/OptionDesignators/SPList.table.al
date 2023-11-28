@@ -3,7 +3,7 @@ table 50124 SPList
 
     fields
     {
-        field(1; ID; Code[50])
+        field(1; ID; Integer)
         {
             DataClassification = ToBeClassified;
         }
@@ -54,5 +54,14 @@ table 50124 SPList
         end;
         SPList.Reset();
         exit(SPList);
+    end;
+
+    procedure getNewID(): Integer
+    begin
+        if rec.FindLast() then begin
+            exit(rec.ID + 1);
+        end else begin
+            exit(1000);
+        end;
     end;
 }

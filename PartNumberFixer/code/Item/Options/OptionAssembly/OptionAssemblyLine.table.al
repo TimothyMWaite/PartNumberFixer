@@ -4,7 +4,7 @@ table 50121 "Option Assembly Line"
 
     fields
     {
-        field(10; ID; Text[50])
+        field(10; ID; Integer)
         {
             DataClassification = ToBeClassified;
         }
@@ -56,6 +56,13 @@ table 50121 "Option Assembly Line"
         key(SK; "Option ID", "Line No.")
         { }
     }
-
+    procedure getNewID(): Integer
+    begin
+        if rec.FindLast() then begin
+            exit(rec.ID + 1);
+        end else begin
+            exit(1000);
+        end;
+    end;
     // You can also define relationships, business logic, triggers, etc.
 }

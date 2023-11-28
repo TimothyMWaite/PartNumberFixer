@@ -43,7 +43,7 @@ table 50106 "Option"
         {
             DataClassification = ToBeClassified;
         }
-        field(8; AssemblyId; text[50])
+        field(8; AssemblyId; Integer)
         {
             DataClassification = ToBeClassified;
 
@@ -65,7 +65,7 @@ table 50106 "Option"
 
     keys
     {
-        key(PK; "Id", Name)
+        key(PK; "Id")
         {
             Clustered = true;
         }
@@ -80,9 +80,12 @@ table 50106 "Option"
         oRec: Record Option;
         spl: Record SPList;
     begin
-        if spl.Get(Format(ID) + "Prefix Designator") then begin
+        spl.Reset();
+        spl.SetFilter(OptionID, Format(rec.Id));
+        spl.SetRange(Designator, "Prefix Designator");
+        if spl.FindFirst() then begin
             if "Prefix Designator" <> '' then begin
-                spl.ID := Format(ID) + "Prefix Designator";
+                // spl.ID := spl.getNewID();
                 spl.Designator := "Prefix Designator";
                 spl.Order := "Prefix Order";
                 spl.active := true;
@@ -92,7 +95,7 @@ table 50106 "Option"
         end else begin
             if "Prefix Designator" <> '' then begin
                 spl.Init();
-                spl.ID := Format(ID) + "Prefix Designator";
+                spl.ID := spl.getNewID();
                 spl.Designator := "Prefix Designator";
                 spl.Order := "Prefix Order";
                 spl.active := true;
@@ -106,5 +109,17 @@ table 50106 "Option"
 
     end;
 
+    procedure getNewId(): Integer
+    var
+        o: Record Option;
+    begin
+        if Id = 0 then begin
+            if o.FindLast() then begin
+                exit(o.Id + 1);
+            end else begin
+                exit(1000);
+            end;
+        end;
+    end;
 
 }

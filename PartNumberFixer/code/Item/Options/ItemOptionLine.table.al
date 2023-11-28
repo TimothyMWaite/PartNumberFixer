@@ -65,4 +65,14 @@ table 50102 "Item Option Line"
             lID := 100;
         end;
     end;
+
+    procedure getNewID(): Integer
+    begin
+        if rec.FindLast() then begin
+            exit(rec.lID + 1);
+        end else begin
+            exit(1000);
+        end;
+        ;
+    end;
 }

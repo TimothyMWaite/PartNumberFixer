@@ -26,7 +26,7 @@ table 50112 "Option Suffix"
         {
             DataClassification = ToBeClassified;
         }
-        field(11; AssemblyChange; Text[50])
+        field(11; AssemblyChange; Integer)
         {
             DataClassification = ToBeClassified;
         }
@@ -47,9 +47,12 @@ table 50112 "Option Suffix"
         oRec: Record Option;
         spl: Record SPList;
     begin
-        if spl.Get(Format(OptionID) + "Suffix Designator") then begin
+        spl.Reset();
+        spl.SetFilter(OptionID, Format(rec.OptionID));
+        spl.SetRange(Designator, rec."Suffix Designator");
+        if spl.FindFirst() then begin
             if "Suffix Designator" <> '' then begin
-                spl.ID := Format(OptionID) + "Suffix Designator";
+                // spl.ID := getNewID();
                 spl.Designator := "Suffix Designator";
                 if oRec.get(OptionID) then begin
                     spl.Order := oRec."Suffix Order";
@@ -61,7 +64,7 @@ table 50112 "Option Suffix"
             end;
         end else begin
             spl.Init();
-            spl.ID := Format(OptionID) + "Suffix Designator";
+            spl.ID := getNewID();
             spl.Designator := "Suffix Designator";
             if oRec.get(OptionID) then begin
                 spl.Order := oRec."Suffix Order";
@@ -71,5 +74,16 @@ table 50112 "Option Suffix"
             spl.Modify();
         end;
 
+    end;
+
+    procedure getNewID(): Integer
+    var
+        spl: Record SPList;
+    begin
+        if spl.FindLast() then begin
+            exit(spl.ID + 1);
+        end else begin
+            exit(1000);
+        end;
     end;
 }

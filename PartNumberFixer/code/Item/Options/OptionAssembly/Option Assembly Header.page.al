@@ -95,7 +95,7 @@ page 50121 "Option Assembly List"
 
             rec.Init();
             rec."Line No." := xRec."Line No." + 1;
-            rec.ID := Format(xRec."Option ID") + xRec.Designator + format(rec."Line No.");
+            rec.ID := rec.getNewID();
             rec."Option ID" := xRec."Option ID";
             rec.Designator := xRec.Designator;
             rec.Insert();

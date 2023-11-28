@@ -24,17 +24,19 @@ page 50116 "Options Card"
                     ApplicationArea = All;
                     trigger OnValidate()
                     var
-
+                        o: Record Option;
                     begin
                         if not initialized then
                             initialize();
                         // CurrPage.OptionDesignatorsList.Page.initialize();
                         if not tableSet then begin
-                            CurrPage.OptionDesignatorsList.Page.setOptionRec(rec);
+                            o := rec;
+                            CurrPage.OptionDesignatorsList.Page.setOptionRec(o);
                             CurrPage.OptionDesignatorsList.Page.createCustomTable();
                             CurrPage.OptionDesignatorsList.Page.setTableSet();
                             tableSet := true;
                         end;
+                        rec.Modify();
                         // CurrPage.OptionDesignatorsList.Page.UpdateSamplePartNumber(rec);
                         // if not tableSet then begin
                         //     Message('InOPOT');
@@ -223,46 +225,32 @@ page 50116 "Options Card"
         // CurrPage.OptionDesignatorsList.Page.updateOptionRec(Rec);
 
         if rec.Id = 0 then begin
+            rec.Id := rec.getNewId();
             if OptionMgt.CreateOption(rec) then begin
                 CurrPage.Update(false);
             end;
         end;
-        CurrPage.OptionDesignatorsList.Page.setOptionRec(rec);
+        oRec := rec;
+        CurrPage.OptionDesignatorsList.Page.setOptionRec(oRec);
 
         CurrPage.Update();
         initialized := true;
     end;
 
-    procedure CountOptions(): Integer
-    var
-        OptionRec: Record "Option";
-    begin
-        if OptionRec.FindSet then begin
-            exit(OptionRec.Count);
-        end else begin
-            exit(0);
-        end;
-    end;
-
     trigger OnInsertRecord(BelowxRec: Boolean): Boolean
     begin
+        if rec.Id = 0 then
+            rec.Id := rec.getNewId();
         addToList();
+
     end;
 
     trigger OnNewRecord(BelowxRec: Boolean)
     var
         oRec: Record Option;
     begin
-
-        if rec.Id = 0 then begin
-            if oRec.FindLast() then begin
-                rec.Id := oRec.Id + 1;
-            end else begin
-                rec.Id := 1000;
-            end;
-        end;
-        if oRec.Get(0) then
-            oRec.Delete
+        if rec.id = 0 then
+            rec.id := rec.getNewId();
     end;
 
     trigger OnClosePage()
@@ -294,7 +282,10 @@ page 50116 "Options Card"
         sRec: Record "Option Suffix";
         LastID: Integer;
     begin
-        if SPRec.Get(Format(rec.id) + rec."Prefix Designator") then begin
+        spRec.Reset();
+        spRec.SetFilter(OptionID, Format(rec.Id));
+        spRec.SetRange(Designator, rec."Prefix Designator");
+        if SPRec.FindFirst() then begin
             SPRec.Designator := rec."Prefix Designator";
             SPRec.Order := rec."Prefix Order";
             SPRec.active := true;
@@ -302,7 +293,7 @@ page 50116 "Options Card"
             SPRec.Modify();
         end else begin
             SPRec.Init();
-            SPRec.ID := format(rec.Id) + rec."Prefix Designator";
+            SPRec.ID := SPRec.getNewID();
             SPRec.Designator := rec."Prefix Designator";
             SPRec.Order := rec."Prefix Order";
             SPRec.active := true;
@@ -316,21 +307,21 @@ page 50116 "Options Card"
         sRec.SetRange(OptionID, rec.Id);
         if sRec.FindSet then begin
             repeat
-                if SPRec.Get(Format(sRec.OptionID) + sRec."Suffix Designator") then begin
+                spRec.SetRange(Designator, sRec."Suffix Designator");
+
+                if SPRec.FindFirst() then begin
                     SPRec.Designator := sRec."Suffix Designator";
                     SPRec.Order := rec."Suffix Order";
                     SPRec.prefix := false;
                     SPRec.Modify();
                 end else begin
                     SPRec.Init();
-                    SPRec.ID := format(rec.Id) + sRec."Suffix Designator";
+                    SPRec.ID := SPRec.getNewID();
                     SPRec.Designator := sRec."Suffix Designator";
                     SPRec.Order := rec."Suffix Order";
                     SPRec.OptionID := rec.Id;
                     SPRec.prefix := false;
-                    if not SPRec.Insert() then begin
-
-                    end;
+                    SPRec.Insert();
                 end;
             until sRec.Next() = 0;
         end;

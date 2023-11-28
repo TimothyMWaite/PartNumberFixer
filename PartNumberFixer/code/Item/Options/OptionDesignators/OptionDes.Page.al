@@ -120,7 +120,7 @@ page 50118 "Option Suffixs"
             }
         }
     }
-    trigger OnAfterGetRecord()
+    trigger OnNewRecord(bxRec: Boolean)
     begin
         if not tableSet then begin
             createCustomTable();
@@ -173,7 +173,10 @@ page 50118 "Option Suffixs"
         sRec: Record "Option Suffix";
         LastID: Integer;
     begin
-        if SPRec.Get(Format(rec.OptionID) + rec."Suffix Designator") then begin
+        SPRec.Reset();
+        SPRec.SetFilter(OptionID, Format(rec.OptionID));
+        SPRec.SetFilter(Designator, rec."Suffix Designator");
+        if SPRec.FindFirst() then begin
             SPRec.Designator := rec."Suffix Designator";
             SPRec.Order := optionRec."Prefix Order";
             SPRec.active := rec.show;
@@ -181,7 +184,7 @@ page 50118 "Option Suffixs"
             SPRec.Modify();
         end else begin
             SPRec.Init();
-            SPRec.ID := format(rec.OptionID) + rec."Suffix Designator";
+            SPRec.ID := rec.getNewId();
             SPRec.Designator := rec."Suffix Designator";
             SPRec.Order := optionRec."Prefix Order";
             SPRec.active := rec.show;
@@ -195,18 +198,31 @@ page 50118 "Option Suffixs"
         updateControl();
     end;
 
-    procedure runAssemblyList(pre: Boolean; oRec: Record Option): Text[50]
+    procedure getArecID(): Integer
+    var
+        a: Record "Option Assembly Line";
+    begin
+        if a.FindLast() then begin
+            exit(a.ID + 1);
+        end else begin
+            exit(1000);
+        end;
+    end;
+
+    procedure runAssemblyList(pre: Boolean; oRec: Record Option): Integer
     var
         OAPage: Page "Option Assembly List";
         ARec: Record "Option Assembly Line";
     begin
-
+        ARec.Reset();
+        ARec.SetFilter("Option ID", Format(oRec.Id));
         if pre then begin
-            if ARec.get(Format(oRec.Id) + oRec."Prefix Designator" + '1') then begin
+            ARec.SetRange(Designator, oRec."Prefix Designator");
+            if ARec.FindFirst() then begin
                 OAPage.SetTableView(ARec);
             end else begin
                 ARec.Init();
-                ARec.ID := Format(oRec.Id) + oRec."Prefix Designator" + '1';
+                ARec.ID := getArecID();
                 ARec."Option ID" := oRec.Id;
                 ARec."Line No." := 1;
                 ARec.Designator := oRec."Prefix Designator";
@@ -215,12 +231,13 @@ page 50118 "Option Suffixs"
             end;
 
         end else begin
-            if ARec.get(Format(oRec.Id) + rec."Suffix Designator" + '1') then begin
+            ARec.SetRange(Designator, rec."Suffix Designator");
+            if ARec.FindFirst() then begin
                 OAPage.SetTableView(ARec);
 
             end else begin
                 ARec.Init();
-                ARec.ID := Format(oRec.Id) + rec."Suffix Designator" + '1';
+                ARec.ID := getArecID();
                 ARec."Option ID" := oRec.Id;
                 ARec.Designator := rec."Suffix Designator";
                 ARec."Line No." := 1;
@@ -255,7 +272,9 @@ page 50118 "Option Suffixs"
                     sRec."Suffix Order" := optionRec."Suffix Order";
                     sRec.show := false;
                     sRec.Modify();
-                    if sl.Get(Format(sRec.OptionID) + sRec."Suffix Designator") then begin
+                    sl.SetFilter(OptionID, format(sRec.OptionID));
+                    sl.SetRange(Designator, sRec."Suffix Designator");
+                    if sl.FindFirst() then begin
                         sl.Order := optionRec."Suffix Order";
                         sl.active := false;
                         sl.Modify();
