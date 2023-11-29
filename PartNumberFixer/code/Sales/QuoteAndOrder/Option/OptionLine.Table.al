@@ -13,7 +13,7 @@ table 50135 OptionLine
             DataClassification = ToBeClassified;
 
         }
-        field(3; shID; Integer)
+        field(3; docID; code[20])
         {
             DataClassification = ToBeClassified;
         }
@@ -25,7 +25,15 @@ table 50135 OptionLine
         {
             DataClassification = ToBeClassified;
         }
-        field(6; selection; text[50])
+        field(6; preSelection; text[50])
+        {
+            DataClassification = ToBeClassified;
+        }
+        field(12; sufSelection; text[50])
+        {
+            DataClassification = ToBeClassified;
+        }
+        field(7; pre; Boolean)
         {
             DataClassification = ToBeClassified;
         }

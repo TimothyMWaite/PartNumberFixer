@@ -1,5 +1,6 @@
 pageextension 50100 ItemCardExt extends "Item Card"
 {
+
     layout
     {
         addfirst(Item)
@@ -26,6 +27,7 @@ pageextension 50100 ItemCardExt extends "Item Card"
             }
         }
     }
+
     // trigger OnOpenPage()
     // var
     //     ItemOptionsPart: Page "Option SubList";

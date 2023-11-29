@@ -40,6 +40,13 @@ table 50124 SPList
 
         }
     }
+    fieldgroups
+    {
+        fieldgroup(DropDown; Designator)
+        {
+            
+        }
+    }
     procedure getActive(): Record SPList
     var
         SPList, s : Record SPList temporary;

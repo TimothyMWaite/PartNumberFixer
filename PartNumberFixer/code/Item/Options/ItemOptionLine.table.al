@@ -41,6 +41,9 @@ table 50102 "Item Option Line"
         {
             DataClassification = ToBeClassified;
         }
+        field(11; pre; Boolean){
+            DataClassification = ToBeClassified;
+        }
     }
 
     keys

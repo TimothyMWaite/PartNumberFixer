@@ -8,6 +8,11 @@ tableextension 50101 itemTableExt extends Item
 
         }
     }
+    fieldgroups{
+        addlast(DropDown; PartNo){
+    
+        }
+    }
     var
         OldPartNo: Text[100];
 

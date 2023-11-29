@@ -49,7 +49,7 @@ page 50115 "Option SubList"
                         if oPage.RunModal = Action::OK then begin
                             updateOptionVals(oPage.getRec());
                         end;
-
+                        
                         if rec."ItemNo." = '' then begin
                             updateINo();
                         end;

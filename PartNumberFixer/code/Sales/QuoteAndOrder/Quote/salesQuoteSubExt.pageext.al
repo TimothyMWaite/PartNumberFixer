@@ -24,9 +24,11 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
                         if (sHead."Bill-to Customer No." <> '') then begin
                             if (rec."Bill-to Customer No." = '') then begin
                                 rec.Validate("Bill-to Customer No.", sHead."Bill-to Customer No.");
+                                hRec := sHead;
                             end;
                         end;
                     end;
+                    oCU.openPickPage(hRec, rec);
                     CurrPage.Update();
                 end;
 
@@ -68,4 +70,7 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
         }
 
     }
+    var
+    oCU: Codeunit "OP Page Manager";
+    hRec: Record "Sales Order Entity Buffer";
 }
