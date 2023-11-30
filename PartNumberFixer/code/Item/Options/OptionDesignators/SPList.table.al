@@ -44,7 +44,7 @@ table 50124 SPList
     {
         fieldgroup(DropDown; Designator)
         {
-            
+
         }
     }
     procedure getActive(): Record SPList
@@ -65,6 +65,7 @@ table 50124 SPList
 
     procedure getNewID(): Integer
     begin
+        rec.Reset();
         if rec.FindLast() then begin
             exit(rec.ID + 1);
         end else begin

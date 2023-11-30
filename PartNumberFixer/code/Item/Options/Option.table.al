@@ -65,14 +65,11 @@ table 50106 "Option"
 
     keys
     {
-        key(PK; "Id")
+        key(PK; "Id", Name)
         {
             Clustered = true;
         }
-        key(SK; "Name")
-        {
 
-        }
     }
     trigger OnModify()
     var

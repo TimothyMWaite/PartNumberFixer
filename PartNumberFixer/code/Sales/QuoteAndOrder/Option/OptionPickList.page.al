@@ -4,8 +4,7 @@ page 50136 OptionLineList
     ApplicationArea = All;
     UsageCategory = Lists;
     SourceTable = OptionLine;
-
-
+    
     layout
     {
         area(Content)
@@ -44,12 +43,27 @@ page 50136 OptionLineList
                 {
                     ApplicationArea = All;
                     TableRelation = SPList.Designator where(OptionID = field(oID), prefix = const(true));
+                    trigger OnValidate()
+                    var
+
+                    begin
+                        rec.updatePN();
+                    end;
+                }
+                field("Part Number"; rec.pn){
+                    ApplicationArea = all;
+                    Editable = false;
                 }
                 field("End Selection"; rec.sufSelection)
                 {
                     ApplicationArea = All;
                     TableRelation = SPList.Designator where(OptionID = field(oID), prefix = const(false));
+                    trigger OnValidate()
+                    var
 
+                    begin
+                        rec.updatePN();
+                    end;
 
                 }
 

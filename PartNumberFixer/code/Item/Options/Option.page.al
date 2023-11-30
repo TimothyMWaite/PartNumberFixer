@@ -262,7 +262,10 @@ page 50116 "Options Card"
             rec.Validate(Name);
             rec.Modify();
             addToList();
-            if sl.Get(Format(rec.id) + rec."Prefix Designator") then begin
+            sl.Reset();
+            sl.SetFilter(OptionID, Format(rec.Id));
+            sl.SetRange(Designator, rec."Prefix Designator");
+            if sl.FindFirst() then begin
                 sl.active := false;
                 sl.Modify();
             end;
