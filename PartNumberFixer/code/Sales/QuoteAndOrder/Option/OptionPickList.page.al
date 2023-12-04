@@ -4,7 +4,7 @@ page 50136 OptionLineList
     ApplicationArea = All;
     UsageCategory = Lists;
     SourceTable = OptionLine;
-    
+
     layout
     {
         area(Content)
@@ -13,25 +13,32 @@ page 50136 OptionLineList
             {
                 ApplicationArea = All;
                 AssistEdit = true;
-                TableRelation = "Sales Line".PartNo;
+                TableRelation = "Sales Line".PartNo WHERE("Document No." = field(docID));
 
             }
             repeater("Options")
             {
+                field(line; Rec.line)
+                {
+                    ApplicationArea = All;
 
+                }
                 field(Id; rec.Id)
                 {
                     ApplicationArea = All;
+                    Visible = false;
 
                 }
                 field(SalesHeadID; rec.docID)
                 {
                     ApplicationArea = All;
+                    Visible = false;
                 }
                 field(optionId; rec.oID)
                 {
                     ApplicationArea = All;
 
+                    Visible = false;
                 }
                 field(OptionName; rec.oName)
                 {
@@ -43,14 +50,17 @@ page 50136 OptionLineList
                 {
                     ApplicationArea = All;
                     TableRelation = SPList.Designator where(OptionID = field(oID), prefix = const(true));
+                    LookupPageId = SPList;
                     trigger OnValidate()
                     var
 
                     begin
-                        rec.updatePN();
+                        updatePN();
+                        CurrPage.Update(false);
                     end;
                 }
-                field("Part Number"; rec.pn){
+                field("Part Number"; rec.pn)
+                {
                     ApplicationArea = all;
                     Editable = false;
                 }
@@ -58,11 +68,14 @@ page 50136 OptionLineList
                 {
                     ApplicationArea = All;
                     TableRelation = SPList.Designator where(OptionID = field(oID), prefix = const(false));
+                    LookupPageId = SPList;
                     trigger OnValidate()
                     var
 
                     begin
-                        rec.updatePN();
+                        updatePN();
+                        CurrPage.Update(false);
+
                     end;
 
                 }
@@ -97,6 +110,33 @@ page 50136 OptionLineList
         exit(fPN);
     end;
 
+    procedure setRecs(IOL: Record "Item Option Line"; sl: Record "Sales Line")
+    var
+        olRec: Record OptionLine;
+    begin
+        olRec.Reset();
+        olRec.SetFilter(docID, sl."Document No.");
+        olRec.SetRange(iID, sl."No.");
+        olRec.SetRange(oID, IOL.OptionID);
+        if olRec.FindFirst() then begin
+            rec := olRec;
+        end else begin
+
+            Rec.Init();
+            Rec.Id := rec.getNewID();
+            Rec.docID := sl."Document No.";
+            Rec.oID := IOL.OptionID;
+            Rec.pn := sl.PartNo;
+            rec.line := sl."Line No.";
+            Rec.oName := IOL.OptionName;
+            Rec.iID := sl."No.";
+            if Rec.Insert() then begin
+                Rec.Next();
+            end;
+        end;
+        rec.Next();
+    end;
+
     procedure getOptions(i: Record Item)
     var
         oLRec: Record OptionLine;
@@ -125,8 +165,46 @@ page 50136 OptionLineList
 
     end;
 
+    procedure updatePN()
+    var
+        lRec: Record OptionLine;
+    begin
+        p := '';
+        s := '';
+        lRec.Reset();
+        lRec.SetFilter(line, Format(rec.line));
+        lRec.SetRange(iID, rec.iID);
+        lRec.SetRange(docId, rec.docID);
+        lRec.SetCurrentKey(preOrder, sufOrder);
+
+        lRec.SetAscending(preOrder, true);
+        lRec.SetAscending(sufOrder, true);
+        if lRec.FindSet() then begin
+            repeat
+                if lRec.pre then begin
+                    p += lRec.preSelection;
+                end else begin
+                    s += lRec.sufSelection;
+                end;
+
+            until lRec.Next() = 0;
+        end;
+        rec.pn := p + rec.pn + s;
+        rec.Modify();
+        lRec.Reset();
+        lRec.SetFilter(iID, rec.iID);
+        lRec.SetFilter(docId, rec.docID);
+        if lRec.FindSet() then begin
+            repeat
+                lRec.pn := rec.pn;
+                lRec.Modify()
+            until lRec.Next() = 0;
+        end;
+    end;
+
     var
         iRec: Record Item;
+        p, s : text[50];
         slRec: Record "Sales Line";
         shRec: Record "Sales Order Entity Buffer";
         spRec: Record SPList temporary;

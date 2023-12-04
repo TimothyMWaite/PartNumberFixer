@@ -58,19 +58,19 @@ codeunit 50103 "My Install Codeunit"
             OptionRec."Price Change" := i * 10.5;
             OptionRec."Suffix Order" := i * 123;
             // OptionRec.Required := i mod 2 = 0;
-            if OptionRec.Insert(false) then begin
-                addSPlist(sl, OptionRec);
-            end;
+            OptionRec.Insert(false);
+            addSPlist(sl, OptionRec);
+
             for j := 1 to 5 do begin
                 OptionSuffixRec.Init();
-                OptionSuffixRec."Suffix Designator" := 'SD' + Format(j);
+                OptionSuffixRec."Suffix Designator" := OptionRec."Prefix Designator" + 'SD' + Format(j);
                 OptionSuffixRec."Suffix Order" := j * 100;
                 OptionSuffixRec.OptionID := OptionRec.Id; // this should match an Id in Option table
                 OptionSuffixRec.Line := j * 2;
                 OptionSuffixRec.show := false;
-                if OptionSuffixRec.Insert(false) then begin
-                    addSPlist(sl, OptionSuffixRec, OptionRec."Suffix Order");
-                end;
+                OptionSuffixRec.Insert(false);
+                addSPlist(sl, OptionSuffixRec, OptionRec."Suffix Order");
+
             end;
         end;
 
@@ -119,18 +119,18 @@ codeunit 50103 "My Install Codeunit"
 
 
         // Update fields if necessary
-        SPRec.Reset();
-        SPRec.SetFilter(OptionID, Format(OptionSuffixRec.OptionID));
-        SPRec.SetRange(Designator, OptionSuffixRec."Suffix Designator");
-        if not SPRec.FindFirst() then begin
-            SPRec.Init();
-            SPRec.ID := SPRec.getNewID(); // This should be a unique value, consider using a number series here
-            SPRec.OptionID := OptionSuffixRec.OptionID;
-            SPRec.Prefix := false;
-            SPRec.Order := SO;
-            SPRec.Designator := OptionSuffixRec."Suffix Designator";
-            // Set other fields as necessary
-            SPRec.Insert();
-        end;
+        // SPRec.Reset();
+        // SPRec.SetFilter(OptionID, Format(OptionSuffixRec.OptionID));
+        // SPRec.SetRange(Designator, OptionSuffixRec."Suffix Designator");
+        // if not SPRec.FindFirst() then begin
+        SPRec.Init();
+        SPRec.ID := SPRec.getNewID(); // This should be a unique value, consider using a number series here
+        SPRec.OptionID := OptionSuffixRec.OptionID;
+        SPRec.Prefix := false;
+        SPRec.Order := SO;
+        SPRec.Designator := OptionSuffixRec."Suffix Designator";
+        // Set other fields as necessary
+        SPRec.Insert();
+        // end;
     end;
 }

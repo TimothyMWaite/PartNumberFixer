@@ -10,16 +10,11 @@ codeunit 50104 "OP Page Manager"
     begin
         ioRec.Reset();
         ioRec.SetFilter("ItemNo.", i."No.");
+        opPage.SetSelectionFilter(lRec);
         if ioRec.FindSet() then begin
             repeat
-                lRec.Init();
-                lRec.Id := lRec.getNewID();
-                lRec.docID := i."Document No.";
-                lRec.oID := ioRec.OptionID;
-                lRec.iID := i."No.";
-                if lRec.Insert() then begin
-                    opPage.SetSelectionFilter(lRec);
-                end;
+                opPage.setRecs(ioRec, i);
+
 
             until ioRec.Next() = 0;
         end;
@@ -27,6 +22,7 @@ codeunit 50104 "OP Page Manager"
         opPage.setI(i);
         Commit();
         if opPage.RunModal() = Action::OK then begin
+            Clear(opPage);
             exit(opPage.getPN())
         end;
     end;
