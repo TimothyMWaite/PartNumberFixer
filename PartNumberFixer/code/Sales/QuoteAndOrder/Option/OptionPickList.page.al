@@ -16,6 +16,10 @@ page 50136 OptionLineList
                 TableRelation = "Sales Line".PartNo WHERE("Document No." = field(docID));
 
             }
+            usercontrol(optionPNSelector; optionPNSelector)
+            {
+
+            }
             repeater("Options")
             {
                 field(line; Rec.line)
@@ -87,7 +91,15 @@ page 50136 OptionLineList
 
     trigger OnOpenPage()
     begin
+        CurrPage.optionPNSelector.addControl(jsList);
+        // CurrPage.optionPNSelector.updateValues(jsList);
+    end;
 
+    trigger OnClosePage()
+    var
+        r: Record OptionLine;
+    begin
+        ClearAll();
     end;
 
     procedure setSH(s: Record "Sales Order Entity Buffer")
@@ -105,9 +117,23 @@ page 50136 OptionLineList
         slRec := i;
     end;
 
+    procedure setList(l: JsonArray)
+    begin
+        jsList := l;
+
+    end;
+
     procedure getPN(): Text[100]
     begin
         exit(fPN);
+    end;
+
+    procedure setRecs(IOL: Record OptionLine; sl: Record "Sales Line")
+    var
+        olRec: Record OptionLine;
+    begin
+        rec := IOL;
+        rec.Next();
     end;
 
     procedure setRecs(IOL: Record "Item Option Line"; sl: Record "Sales Line")
@@ -118,6 +144,7 @@ page 50136 OptionLineList
         olRec.SetFilter(docID, sl."Document No.");
         olRec.SetRange(iID, sl."No.");
         olRec.SetRange(oID, IOL.OptionID);
+        olRec.SetRange(line, sl."Line No.");
         if olRec.FindFirst() then begin
             rec := olRec;
         end else begin
@@ -171,6 +198,7 @@ page 50136 OptionLineList
     begin
         p := '';
         s := '';
+        rec.pn := iRec.PartNo;
         lRec.Reset();
         lRec.SetFilter(line, Format(rec.line));
         lRec.SetRange(iID, rec.iID);
@@ -209,6 +237,7 @@ page 50136 OptionLineList
         shRec: Record "Sales Order Entity Buffer";
         spRec: Record SPList temporary;
         fPN: Text[200];
+        jsList: JsonArray;
 
 }
 enum 50137 SalesLineEnum

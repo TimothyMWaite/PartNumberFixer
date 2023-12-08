@@ -10,4 +10,8 @@ tableextension 50105 SalesLineExt extends "Sales Line"
         // Add changes to table fields here
 
     }
+    fieldgroups
+    {
+        addlast(DropDown; "Line No.") { }
+    }
 }

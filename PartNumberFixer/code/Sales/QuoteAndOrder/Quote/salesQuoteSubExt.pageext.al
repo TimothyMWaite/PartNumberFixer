@@ -8,9 +8,11 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
             {
                 ApplicationArea = ALL;
                 Caption = 'Part Number';
-                AssistEdit = true;
+                AssistEdit = false;
 
-
+                DrillDown = true;
+                Lookup = true;
+                DrillDownPageId = OptionLineList;
                 LookupPageId = "Intermediary Part List";
                 TableRelation = "Intermediary Part Table";
                 trigger OnValidate()
@@ -28,12 +30,17 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
                             end;
                         end;
                     end;
-                    oCU.openPickPage(hRec, rec);
+                    oCU.openPickPage(rec);
                     CurrPage.Update();
                 end;
 
                 // UpdateSalesLineFields.UpdateFields(Rec, xRec, ((xRec."No." = '') and (xRec.PartNo = '')));
 
+                trigger OnDrillDown()
+                begin
+                    oCU.openPickPage(rec);
+
+                end;
 
                 trigger OnAssistEdit()
                 var
@@ -70,7 +77,9 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
         }
 
     }
+    
     var
-    oCU: Codeunit "OP Page Manager";
-    hRec: Record "Sales Order Entity Buffer";
+        opPage: Page OptionLineList;
+        oCU: Codeunit "OP Page Manager";
+        hRec: Record "Sales Order Entity Buffer";
 }
