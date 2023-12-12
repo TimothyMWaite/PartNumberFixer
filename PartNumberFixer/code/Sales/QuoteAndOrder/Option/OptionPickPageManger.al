@@ -8,6 +8,7 @@ codeunit 50104 "OP Page Manager"
         slRec: Record "Sales Line";
         opPage: Page OptionLineList;
         pn: Text[200];
+        selList: JsonArray;
         selObj: JsonObject;
     begin
         ioRec.Reset();
@@ -38,6 +39,7 @@ codeunit 50104 "OP Page Manager"
                 if selObj.Contains('LineNo') OR selObj.Contains('PartNo') then begin
                     selObj.Replace('LineNo', slRec."Line No.");
                     selObj.Replace('PartNo', slRec.PartNo);
+
                 end else begin
 
                     selObj.Add('LineNo', slRec."Line No.");
@@ -74,8 +76,7 @@ codeunit 50104 "OP Page Manager"
     end;
 
     var
-        // opPage: Page OptionLineList;
-        selList: JsonArray;
+    // opPage: Page OptionLineList;
 
 
 }

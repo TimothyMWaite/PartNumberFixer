@@ -14,10 +14,13 @@ function addControl(l) {
   // Loop through the items in jsList and add options to the dropdown
   for (var i = 0; i < jsList.length; i++) {
     var item = jsList[i];
-    var option = document.createElement('option');
-    option.value = item.LineNo; // Set the value for the option
-    option.text = item.PartNo;  // Set the text for the option
-    select.appendChild(option); // Add the option to the select element
+    if (item.PartNo != "" && item.PartNo != null) {
+
+      var option = document.createElement('option');
+      option.value = item.LineNo; // Set the value for the option
+      option.text = item.PartNo;  // Set the text for the option
+      select.appendChild(option); // Add the option to the select element
+    }
   }
 
   // Add an event listener to handle selection changes

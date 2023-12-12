@@ -41,7 +41,8 @@ table 50102 "Item Option Line"
         {
             DataClassification = ToBeClassified;
         }
-        field(11; pre; Boolean){
+        field(11; pre; Boolean)
+        {
             DataClassification = ToBeClassified;
         }
     }
@@ -69,6 +70,17 @@ table 50102 "Item Option Line"
         end;
     end;
 
+    procedure convertOption(o: Record Option)
+    begin
+        oRec := o;
+        OptionID := o.Id;
+        OptionName := o.Name;
+        Caption := o.Caption;
+        lID := getNewID();
+        "Price Change" := o."Price Change";
+
+    end;
+
     procedure getNewID(): Integer
     begin
         if rec.FindLast() then begin
@@ -78,4 +90,7 @@ table 50102 "Item Option Line"
         end;
         ;
     end;
+
+    var
+        oRec: Record Option;
 }

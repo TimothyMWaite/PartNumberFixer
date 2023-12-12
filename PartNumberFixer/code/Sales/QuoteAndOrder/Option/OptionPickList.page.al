@@ -88,9 +88,25 @@ page 50136 OptionLineList
             }
         }
     }
+    actions
+    {
+        area(Creation)
+        {
 
+            action(addList)
+            {
+                ApplicationArea = All;
+
+                trigger OnAction()
+                begin
+                    CurrPage.optionPNSelector.addControl(jsList);
+                end;
+            }
+        }
+    }
     trigger OnOpenPage()
     begin
+        Message('JSL: %1', jsList);
         CurrPage.optionPNSelector.addControl(jsList);
         // CurrPage.optionPNSelector.updateValues(jsList);
     end;
