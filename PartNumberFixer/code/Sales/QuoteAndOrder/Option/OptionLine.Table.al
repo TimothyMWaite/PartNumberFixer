@@ -112,6 +112,18 @@ table 50135 OptionLine
         exit(rec.sufSelection = '');
     end;
 
+    procedure convertOption(o: Record Option)
+    begin
+        oRec := o;
+        oID := o.Id;
+        oName := o.Name;
+        if Id = 0 then
+            Id := getNewID();
+
+
+    end;
+
     var
+        oRec: Record Option;
         p, s : text[50];
 }

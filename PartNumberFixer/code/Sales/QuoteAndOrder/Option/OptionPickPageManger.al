@@ -4,12 +4,11 @@ codeunit 50104 "OP Page Manager"
     var
         lRec, ol : Record OptionLine;
         sRec: Record SPList;
+        iRec: Record Item;
         ioRec: Record "Item Option Line";
         slRec: Record "Sales Line";
         opPage: Page OptionLineList;
         pn: Text[200];
-        selList: JsonArray;
-        selObj: JsonObject;
     begin
         ioRec.Reset();
         ioRec.SetFilter("ItemNo.", i."No.");
@@ -33,29 +32,11 @@ codeunit 50104 "OP Page Manager"
                 until ioRec.Next() = 0;
             end;
         end;
-        slRec.SetFilter("Document No.", i."Document No.");
-        if slRec.FindSet() then begin
-            repeat
-                if selObj.Contains('LineNo') OR selObj.Contains('PartNo') then begin
-                    selObj.Replace('LineNo', slRec."Line No.");
-                    selObj.Replace('PartNo', slRec.PartNo);
-
-                end else begin
-
-                    selObj.Add('LineNo', slRec."Line No.");
-                    selObj.Add('PartNo', slRec.PartNo);
-                end;
-
-                selList.Add(selObj);
-            until slRec.Next() = 0;
-        end;
-
         lRec.Reset();
         lRec.SetRange(iID, i."No.");
         lRec.SetFilter(line, Format(i."Line No."));
         lRec.SetFilter(docID, i."Document No.");
         opPage.SetTableView(lRec);
-        opPage.setList(selList);
         opPage.setI(i);
         Commit();
         if opPage.RunModal() = Action::OK then begin

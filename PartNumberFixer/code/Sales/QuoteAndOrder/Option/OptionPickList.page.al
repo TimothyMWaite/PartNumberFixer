@@ -9,17 +9,6 @@ page 50136 OptionLineList
     {
         area(Content)
         {
-            field(PartNum; rec.pn)
-            {
-                ApplicationArea = All;
-                AssistEdit = true;
-                TableRelation = "Sales Line".PartNo WHERE("Document No." = field(docID));
-
-            }
-            usercontrol(optionPNSelector; optionPNSelector)
-            {
-
-            }
             repeater("Options")
             {
                 field(line; Rec.line)
@@ -55,13 +44,13 @@ page 50136 OptionLineList
                     ApplicationArea = All;
                     TableRelation = SPList.Designator where(OptionID = field(oID), prefix = const(true));
                     LookupPageId = SPList;
-                    trigger OnValidate()
-                    var
+                    // trigger OnValidate()
+                    // var
 
-                    begin
-                        updatePN();
-                        CurrPage.Update(false);
-                    end;
+                    // begin
+                    //     updatePN();
+                    //     CurrPage.Update(false);
+                    // end;
                 }
                 field("Part Number"; rec.pn)
                 {
@@ -73,14 +62,14 @@ page 50136 OptionLineList
                     ApplicationArea = All;
                     TableRelation = SPList.Designator where(OptionID = field(oID), prefix = const(false));
                     LookupPageId = SPList;
-                    trigger OnValidate()
-                    var
+                    // trigger OnValidate()
+                    // var
 
-                    begin
-                        updatePN();
-                        CurrPage.Update(false);
+                    // begin
+                    //     updatePN();
+                    //     CurrPage.Update(false);
 
-                    end;
+                    // end;
 
                 }
 
@@ -88,27 +77,16 @@ page 50136 OptionLineList
             }
         }
     }
-    actions
-    {
-        area(Creation)
-        {
-
-            action(addList)
-            {
-                ApplicationArea = All;
-
-                trigger OnAction()
-                begin
-                    CurrPage.optionPNSelector.addControl(jsList);
-                end;
-            }
-        }
-    }
-    trigger OnOpenPage()
+    actions { }
+    trigger OnAfterGetCurrRecord()
     begin
-        Message('JSL: %1', jsList);
-        CurrPage.optionPNSelector.addControl(jsList);
-        // CurrPage.optionPNSelector.updateValues(jsList);
+        // Message('rec: %1', rec);
+        updatePN();
+    end;
+
+    trigger OnModifyRecord(): Boolean
+    begin
+        // updatePN();
     end;
 
     trigger OnClosePage()
@@ -131,12 +109,6 @@ page 50136 OptionLineList
             iRec := item;
         end;
         slRec := i;
-    end;
-
-    procedure setList(l: JsonArray)
-    begin
-        jsList := l;
-
     end;
 
     procedure getPN(): Text[100]
@@ -180,34 +152,6 @@ page 50136 OptionLineList
         rec.Next();
     end;
 
-    procedure getOptions(i: Record Item)
-    var
-        oLRec: Record OptionLine;
-        ioRec: Record "Item Option Line";
-        sp: Record "SPList";
-        oRec: Record "Option";
-    begin
-        ioRec.Reset();
-        ioRec.setFilter("ItemNo.", i."No.");
-        if ioRec.FindSet() then begin
-            repeat
-                sp.Reset();
-                sp.SetFilter(OptionID, Format(ioRec.OptionID));
-                if sp.FindSet() then begin
-                    repeat
-                        if sp.prefix then begin
-
-                        end else begin
-
-                        end;
-                    until spRec.Next() = 0;
-                end;
-            until ioRec.Next() = 0;
-        end;
-
-
-    end;
-
     procedure updatePN()
     var
         lRec: Record OptionLine;
@@ -216,15 +160,16 @@ page 50136 OptionLineList
         s := '';
         rec.pn := iRec.PartNo;
         lRec.Reset();
-        lRec.SetFilter(line, Format(rec.line));
+        lRec.SetFilter(docId, rec.docID);
         lRec.SetRange(iID, rec.iID);
-        lRec.SetRange(docId, rec.docID);
+        lRec.SetRange(line, rec.line);
         lRec.SetCurrentKey(preOrder, sufOrder);
 
         lRec.SetAscending(preOrder, true);
         lRec.SetAscending(sufOrder, true);
         if lRec.FindSet() then begin
             repeat
+                // Message('\Pre: %1, \Suf %2 \preTF: %3', lRec.preSelection, lRec.sufSelection, lRec.pre);
                 if lRec.pre then begin
                     p += lRec.preSelection;
                 end else begin
@@ -234,6 +179,10 @@ page 50136 OptionLineList
             until lRec.Next() = 0;
         end;
         rec.pn := p + rec.pn + s;
+        // Message('\PN: %1' + '\P: %2' +
+        // '\S: %3',
+        // rec.pn, p, s
+        //  );
         rec.Modify();
         lRec.Reset();
         lRec.SetFilter(iID, rec.iID);
@@ -253,17 +202,6 @@ page 50136 OptionLineList
         shRec: Record "Sales Order Entity Buffer";
         spRec: Record SPList temporary;
         fPN: Text[200];
-        jsList: JsonArray;
-
-}
-enum 50137 SalesLineEnum
-{
 
 
-    Extensible = true;
-
-
-    // Add more values for each sales line.
-
-    caption = 'Sales Lines';
 }
