@@ -4,16 +4,23 @@ page 50136 OptionLineList
     ApplicationArea = All;
     UsageCategory = Lists;
     SourceTable = OptionLine;
-
     layout
     {
         area(Content)
         {
+            field("Part Number"; fPN)
+            {
+                ApplicationArea = all;
+                Editable = false;
+                Caption = 'Current Part Number:';
+
+            }
             repeater("Options")
             {
                 field(line; Rec.line)
                 {
                     ApplicationArea = All;
+                    Editable = false;
 
                 }
                 field(Id; rec.Id)
@@ -25,7 +32,7 @@ page 50136 OptionLineList
                 field(SalesHeadID; rec.docID)
                 {
                     ApplicationArea = All;
-                    Visible = false;
+                    Visible = true;
                 }
                 field(optionId; rec.oID)
                 {
@@ -36,6 +43,7 @@ page 50136 OptionLineList
                 field(OptionName; rec.oName)
                 {
                     ApplicationArea = All;
+                    Editable = false;
 
                 }
                 //selection fields
@@ -44,49 +52,59 @@ page 50136 OptionLineList
                     ApplicationArea = All;
                     TableRelation = SPList.Designator where(OptionID = field(oID), prefix = const(true));
                     LookupPageId = SPList;
-                    // trigger OnValidate()
-                    // var
+                    Editable = rec.oName <> '';
+                    trigger OnAfterLookup(Selected: RecordRef)
+                    begin
+                        updatePN();
+                    end;
 
-                    // begin
-                    //     updatePN();
-                    //     CurrPage.Update(false);
-                    // end;
-                }
-                field("Part Number"; rec.pn)
-                {
-                    ApplicationArea = all;
-                    Editable = false;
+                    trigger OnValidate()
+                    var
+
+                    begin
+                        updatePN();
+                        CurrPage.Update(false);
+                    end;
                 }
                 field("End Selection"; rec.sufSelection)
                 {
                     ApplicationArea = All;
                     TableRelation = SPList.Designator where(OptionID = field(oID), prefix = const(false));
                     LookupPageId = SPList;
-                    // trigger OnValidate()
-                    // var
+                    Editable = rec.oName <> '';
+                    trigger OnAfterLookup(Selected: RecordRef)
+                    begin
+                        updatePN();
+                    end;
 
-                    // begin
-                    //     updatePN();
-                    //     CurrPage.Update(false);
+                    trigger OnValidate()
+                    var
 
-                    // end;
+                    begin
+                        updatePN();
+                        CurrPage.Update(false);
 
+                    end;
                 }
-
-
             }
         }
     }
     actions { }
     trigger OnAfterGetCurrRecord()
+    var
+        lRec: Record OptionLine;
     begin
-        // Message('rec: %1', rec);
         updatePN();
+        if lRec.Get(0) then begin
+            lRec.Delete();
+            CurrPage.Update(false);
+        end;
     end;
 
     trigger OnModifyRecord(): Boolean
     begin
-        // updatePN();
+        updatePN();
+
     end;
 
     trigger OnClosePage()
@@ -94,6 +112,18 @@ page 50136 OptionLineList
         r: Record OptionLine;
     begin
         ClearAll();
+    end;
+
+    trigger OnInsertRecord(BelowxRec: Boolean): Boolean
+    var
+        lRec: Record OptionLine;
+    begin
+        Message('\Do not try to add options here. Go to the Item ' + '\page and add the needed options there! Or talk to Tim.');
+        if lRec.Get(0) then begin
+            lRec.Delete();
+            CurrPage.Update(false);
+        end;
+        exit(false);
     end;
 
     procedure setSH(s: Record "Sales Order Entity Buffer")
@@ -111,9 +141,14 @@ page 50136 OptionLineList
         slRec := i;
     end;
 
-    procedure getPN(): Text[100]
+    procedure getPN(): Text[200]
     begin
         exit(fPN);
+    end;
+
+    procedure resetPN()
+    begin
+        fPN := iRec.PartNo;
     end;
 
     procedure setRecs(IOL: Record OptionLine; sl: Record "Sales Line")
@@ -136,7 +171,6 @@ page 50136 OptionLineList
         if olRec.FindFirst() then begin
             rec := olRec;
         end else begin
-
             Rec.Init();
             Rec.Id := rec.getNewID();
             Rec.docID := sl."Document No.";
@@ -169,30 +203,17 @@ page 50136 OptionLineList
         lRec.SetAscending(sufOrder, true);
         if lRec.FindSet() then begin
             repeat
-                // Message('\Pre: %1, \Suf %2 \preTF: %3', lRec.preSelection, lRec.sufSelection, lRec.pre);
-                if lRec.pre then begin
+                if lRec.preSelection <> '' then
                     p += lRec.preSelection;
-                end else begin
+                if lRec.sufSelection <> '' then
                     s += lRec.sufSelection;
-                end;
+                lRec.Modify();
+            until lRec.Next() = 0;
+        end;
+        if rec.oName <> '' then
+            rec.Modify();
+        fPN := p + iRec.PartNo + s;
 
-            until lRec.Next() = 0;
-        end;
-        rec.pn := p + rec.pn + s;
-        // Message('\PN: %1' + '\P: %2' +
-        // '\S: %3',
-        // rec.pn, p, s
-        //  );
-        rec.Modify();
-        lRec.Reset();
-        lRec.SetFilter(iID, rec.iID);
-        lRec.SetFilter(docId, rec.docID);
-        if lRec.FindSet() then begin
-            repeat
-                lRec.pn := rec.pn;
-                lRec.Modify()
-            until lRec.Next() = 0;
-        end;
     end;
 
     var
