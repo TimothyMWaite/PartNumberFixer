@@ -40,7 +40,7 @@ table 50135 OptionLine
         field(9; iID; code[20])
         {
             DataClassification = ToBeClassified;
-            TableRelation = Item."No.";
+            
         }
         field(10; preOrder; Integer)
         {

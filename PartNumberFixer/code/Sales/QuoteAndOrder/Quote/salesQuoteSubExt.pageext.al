@@ -36,7 +36,7 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
                     end;
                     if rec."Line No." <> 0 then
                         openPickPage();
-                    CurrPage.Update();
+                    CurrPage.Update(false);
                 end;
 
                 // UpdateSalesLineFields.UpdateFields(Rec, xRec, ((xRec."No." = '') and (xRec.PartNo = '')));
@@ -98,7 +98,7 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
         opPage: Page OptionLineList;
         pn: Text[200];
     begin
-        Message('lN: %1', rec."Line No.");
+        // Message('lN: %1', rec."Line No.");
         ioRec.Reset();
         ioRec.SetFilter("ItemNo.", rec."No.");
         ol.Reset();
@@ -119,7 +119,7 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
                     lRec.pn := rec.PartNo;
                     lRec.line := rec."Line No.";
                     lRec.Insert();
-                    Message('lrLN: %1', lRec.line);
+                // Message('lrLN: %1', lRec.line);
                 until ioRec.Next() = 0;
             end;
         end;
@@ -133,12 +133,24 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
         Commit();
         if opPage.RunModal() = Action::OK then begin
 
-            rec.PartNo := opPage.getPN();
-            Message('%1', rec.PartNo);
 
+            getNewPN();
             CurrPage.Update(false);
-            Clear(opPage);
+            // Clear(opPage);
         end;
+    end;
+
+    procedure getNewPN()
+    var
+        lRec: Record OptionLine;
+    begin
+        // lRec.SetFilter(docID, rec."Document No.");
+        // lRec.SetRange(line, rec."Line No.");
+        // lRec.SetRange(iID, rec."No.");
+        // if lRec.FindFirst() then begin
+        //     rec.PartNo := lRec.pn;
+        //     Message('%1', rec.PartNo);
+        // end;
     end;
 
     var

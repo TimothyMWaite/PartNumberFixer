@@ -188,7 +188,7 @@ page 50136 OptionLineList
 
     procedure updatePN()
     var
-        lRec: Record OptionLine;
+        lRec, ol : Record OptionLine;
     begin
         p := '';
         s := '';
@@ -207,12 +207,22 @@ page 50136 OptionLineList
                     p += lRec.preSelection;
                 if lRec.sufSelection <> '' then
                     s += lRec.sufSelection;
-                lRec.Modify();
+                lRec.Modify(false);
             until lRec.Next() = 0;
         end;
         if rec.oName <> '' then
             rec.Modify();
         fPN := p + iRec.PartNo + s;
+        // ol.SetFilter(docID, rec.docID);
+        // ol.SetRange(line, rec.line);
+        // if ol.FindSet() then begin
+        //     repeat
+        //         ol.pn := fPN;
+        //         ol.Modify();
+        //     until rec.Next() = 0;
+        // end;
+        slRec.PartNo := fPN;
+        slRec.Modify(false);
 
     end;
 
