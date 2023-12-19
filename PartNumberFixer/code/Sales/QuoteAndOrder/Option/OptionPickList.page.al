@@ -2,7 +2,6 @@ page 50136 OptionLineList
 {
     PageType = List;
     ApplicationArea = All;
-    UsageCategory = Lists;
     SourceTable = OptionLine;
     layout
     {
@@ -105,6 +104,7 @@ page 50136 OptionLineList
     begin
         updatePN();
 
+
     end;
 
     trigger OnClosePage()
@@ -112,6 +112,7 @@ page 50136 OptionLineList
         r: Record OptionLine;
     begin
         ClearAll();
+        updateAssemblyInfo();
     end;
 
     trigger OnInsertRecord(BelowxRec: Boolean): Boolean
@@ -159,40 +160,14 @@ page 50136 OptionLineList
         rec.Next();
     end;
 
-    procedure setRecs(IOL: Record "Item Option Line"; sl: Record "Sales Line")
-    var
-        olRec: Record OptionLine;
-    begin
-        olRec.Reset();
-        olRec.SetFilter(docID, sl."Document No.");
-        olRec.SetRange(iID, sl."No.");
-        olRec.SetRange(oID, IOL.OptionID);
-        olRec.SetRange(line, sl."Line No.");
-        if olRec.FindFirst() then begin
-            rec := olRec;
-        end else begin
-            Rec.Init();
-            Rec.Id := rec.getNewID();
-            Rec.docID := sl."Document No.";
-            Rec.oID := IOL.OptionID;
-            Rec.pn := sl.PartNo;
-            rec.line := sl."Line No.";
-            Rec.oName := IOL.OptionName;
-            Rec.iID := sl."No.";
-            if Rec.Insert() then begin
-                Rec.Next();
-            end;
-        end;
-        rec.Next();
-    end;
-
     procedure updatePN()
     var
-        lRec, ol : Record OptionLine;
+        lRec, ol, li : Record OptionLine;
     begin
         p := '';
         s := '';
         rec.pn := iRec.PartNo;
+
         lRec.Reset();
         lRec.SetFilter(docId, rec.docID);
         lRec.SetRange(iID, rec.iID);
@@ -210,22 +185,72 @@ page 50136 OptionLineList
                 lRec.Modify(false);
             until lRec.Next() = 0;
         end;
-        if rec.oName <> '' then
-            rec.Modify();
         fPN := p + iRec.PartNo + s;
-        // ol.SetFilter(docID, rec.docID);
-        // ol.SetRange(line, rec.line);
-        // if ol.FindSet() then begin
-        //     repeat
-        //         ol.pn := fPN;
-        //         ol.Modify();
-        //     until rec.Next() = 0;
-        // end;
+
+        rec.Modify(false);
+        li.Reset();
+        li.SetFilter(docID, rec.docID);
+        li.SetRange(line, rec.line);
+        if ol.FindSet() then begin
+            repeat
+                if li.Id <> 0 then begin
+
+                    li.pn := fPN;
+                    li.Modify(false);
+                end;
+            until li.Next() = 0;
+        end;
         slRec.PartNo := fPN;
         slRec.Modify(false);
-
+        Message('%1, %2', rec.sufassemblyID, rec.preassemblyID);
     end;
 
+    procedure updateAssemblyInfo()
+    var
+        aRec: Record "Option Assembly Line";
+        lRec: Record OptionLine;
+        bStr: Text[1];
+    begin
+        bStr := '';
+        aRec.Reset();
+        lRec.Reset();
+        lRec.SetFilter(docID, rec.docID);
+        lRec.SetRange(line, rec.line);
+        if lRec.FindSet() then begin
+            repeat
+                if lRec.preSelection <> '' then begin
+                    aRec.Reset();
+                    aRec.SetRange("Option ID", lRec.oID);
+                    aRec.SetFilter(Designator, lRec.preSelection);
+                    if aRec.FindSet() then begin
+                        repeat
+                            updateAssembly(aRec);
+                        until aRec.Next() = 0;
+                    end;
+                end;
+                if lRec.sufSelection <> '' then begin
+                    aRec.Reset();
+                    aRec.SetRange("Option ID", lRec.oID);
+                    aRec.SetFilter(Designator, lRec.sufSelection);
+                    if aRec.FindSet() then begin
+                        repeat
+                            updateAssembly(aRec);
+                        until aRec.Next() = 0;
+                    end;
+                end;
+            until lRec.Next() = 0;
+        end;
+
+    end;
+    procedure updateAssembly(a: Record "Option Assembly Line"): Boolean
+    var
+    bRec: Record "BOM Component";
+        dRec: Record "Assemble-to-Order Link";
+    begin
+        
+        bRec.SetFilter("Parent Item No.", rec.iID);
+        
+    end;
     var
         iRec: Record Item;
         p, s : text[50];

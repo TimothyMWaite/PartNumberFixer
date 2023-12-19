@@ -4,6 +4,7 @@ page 50116 "Options Card"
     SourceTable = "Option";
     AboutTitle = 'Option';
     CardPageId = "Options Card";
+    UsageCategory = Documents;
     Caption = 'Option';
     ApplicationArea = All;
     Editable = true;
@@ -36,7 +37,7 @@ page 50116 "Options Card"
                             CurrPage.OptionDesignatorsList.Page.setTableSet();
                             tableSet := true;
                         end;
-                        rec.Modify();
+                        // rec.Modify();
                         // CurrPage.OptionDesignatorsList.Page.UpdateSamplePartNumber(rec);
                         // if not tableSet then begin
                         //     Message('InOPOT');

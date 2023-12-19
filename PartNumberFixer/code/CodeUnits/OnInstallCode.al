@@ -5,7 +5,7 @@ codeunit 50103 "My Install Codeunit"
     trigger OnInstallAppPerCompany()
     begin
         PopulateIntermediaryTable();
-        InsertTestData();
+        // InsertTestData();
     end;
 
     procedure PopulateIntermediaryTable()
@@ -37,62 +37,62 @@ codeunit 50103 "My Install Codeunit"
         IntermediaryPartRec.ASCENDING(TRUE);
     end;
 
-    procedure InsertTestData()
-    var
-        OptionRec: Record "Option";
-        sl: Record SPList;
-        OptionSuffixRec: Record "Option Suffix";
-        desc: InStream;
-        d: Text;
-        i, j : Integer;
-    begin
-        // Insert test data into Option table
-        for i := 1 to 5 do begin
-            OptionRec.Init();
-            OptionRec.Id := i + 1000;
-            OptionRec.Name := 'T' + Format(i);
-            OptionRec.Description := 'This is a test of the description field for ' + OptionRec.Name;
-            OptionRec.Caption := 'Caption ' + Format(i);
-            OptionRec."Prefix Designator" := 'P' + format(i);
-            OptionRec."Prefix Order" := i * 100;
-            OptionRec."Price Change" := i * 10.5;
-            OptionRec."Suffix Order" := i * 123;
-            // OptionRec.Required := i mod 2 = 0;
-            OptionRec.Insert(false);
-            addSPlist(sl, OptionRec);
+    // procedure InsertTestData()
+    // var
+    //     OptionRec: Record "Option";
+    //     sl: Record SPList;
+    //     OptionSuffixRec: Record "Option Suffix";
+    //     desc: InStream;
+    //     d: Text;
+    //     i, j : Integer;
+    // begin
+    //     // Insert test data into Option table
+    //     for i := 1 to 5 do begin
+    //         OptionRec.Init();
+    //         OptionRec.Id := i + 1000;
+    //         OptionRec.Name := 'T' + Format(i);
+    //         OptionRec.Description := 'This is a test of the description field for ' + OptionRec.Name;
+    //         OptionRec.Caption := 'Caption ' + Format(i);
+    //         OptionRec."Prefix Designator" := 'P' + format(i);
+    //         OptionRec."Prefix Order" := i * 100;
+    //         OptionRec."Price Change" := i * 10.5;
+    //         OptionRec."Suffix Order" := i * 123;
+    //         // OptionRec.Required := i mod 2 = 0;
+    //         OptionRec.Insert(false);
+    //         addSPlist(sl, OptionRec);
 
-            for j := 1 to 5 do begin
-                OptionSuffixRec.Init();
-                OptionSuffixRec."Suffix Designator" := OptionRec."Prefix Designator" + 'SD' + Format(j);
-                OptionSuffixRec."Suffix Order" := j * 100;
-                OptionSuffixRec.OptionID := OptionRec.Id; // this should match an Id in Option table
-                OptionSuffixRec.Line := j * 2;
-                OptionSuffixRec.show := false;
-                OptionSuffixRec.Insert(false);
-                addSPlist(sl, OptionSuffixRec, OptionRec."Suffix Order");
+    //         for j := 1 to 5 do begin
+    //             OptionSuffixRec.Init();
+    //             OptionSuffixRec."Suffix Designator" := OptionRec."Prefix Designator" + 'SD' + Format(j);
+    //             OptionSuffixRec."Suffix Order" := j * 100;
+    //             OptionSuffixRec.OptionID := OptionRec.Id; // this should match an Id in Option table
+    //             OptionSuffixRec.Line := j * 2;
+    //             OptionSuffixRec.show := false;
+    //             OptionSuffixRec.Insert(false);
+    //             addSPlist(sl, OptionSuffixRec, OptionRec."Suffix Order");
 
-            end;
-        end;
+    //         end;
+    //     end;
 
-        // Insert test data into Option Suffix table
-    end;
+    //     // Insert test data into Option Suffix table
+    // end;
 
-    procedure addSPlist(var SPRec: Record SPList; OptionRec: Record Option)
-    begin
-        // Assuming we are handling a prefix
-        SPRec.SetFilter(OptionID, Format(OptionRec.Id));
-        SPRec.SetRange(Designator, OptionRec."Prefix Designator");
-        if not SPRec.FindFirst() then begin
-            SPRec.Init();
-            SPRec.ID := SPRec.getNewID(); // This should be a unique value, consider using a number series here
-            SPRec.OptionID := OptionRec.Id;
-            SPRec.Prefix := true;
-            SPRec.Order := OptionRec."Prefix Order";
-            SPRec.Designator := OptionRec."Prefix Designator";
-            // Set other fields as necessary
-            SPRec.Insert();
-        end;
-    end;
+    // procedure addSPlist(var SPRec: Record SPList; OptionRec: Record Option)
+    // begin
+    //     // Assuming we are handling a prefix
+    //     SPRec.SetFilter(OptionID, Format(OptionRec.Id));
+    //     SPRec.SetRange(Designator, OptionRec."Prefix Designator");
+    //     if not SPRec.FindFirst() then begin
+    //         SPRec.Init();
+    //         SPRec.ID := SPRec.getNewID(); // This should be a unique value, consider using a number series here
+    //         SPRec.OptionID := OptionRec.Id;
+    //         SPRec.Prefix := true;
+    //         SPRec.Order := OptionRec."Prefix Order";
+    //         SPRec.Designator := OptionRec."Prefix Designator";
+    //         // Set other fields as necessary
+    //         SPRec.Insert();
+    //     end;
+    // end;
 
     procedure addCCtoAssembly()
     var

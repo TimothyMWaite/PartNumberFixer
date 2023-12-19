@@ -3,7 +3,6 @@ page 50121 "Option Assembly List"
     PageType = Worksheet;
     ApplicationArea = All;
     SourceTable = "Option Assembly Line";
-    UsageCategory = Lists;
     Caption = 'Option Assembly List';
     Editable = true;
     MultipleNewLines = false;

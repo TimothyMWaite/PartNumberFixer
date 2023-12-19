@@ -2,7 +2,8 @@ page 50123 OptionList
 {
     PageType = List;
     CardPageId = "Options Card";
-
+    UsageCategory = "Lists";
+    AboutTitle = 'Options';
     ApplicationArea = All;
     SourceTable = Option;
 

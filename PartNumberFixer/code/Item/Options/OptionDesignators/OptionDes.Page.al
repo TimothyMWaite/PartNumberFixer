@@ -51,7 +51,6 @@ page 50118 "Option Suffixs"
                     trigger OnDrillDown()
                     begin
                         rec.AssemblyChange := runAssemblyList(false, optionRec);
-                        rec.Modify();
                     end;
                 }
                 field("Active"; Rec.show)
@@ -249,12 +248,7 @@ page 50118 "Option Suffixs"
             rec.AssemblyChange := ARec.ID;
         Commit();
         if OAPage.RunModal = Action::OK then begin
-            if rec."Suffix Designator" <> '' then begin
-
-                rec.Modify();
-                if pre then
-                    exit(ARec.ID);
-            end;
+            exit(ARec.ID);
         end;
     end;
 

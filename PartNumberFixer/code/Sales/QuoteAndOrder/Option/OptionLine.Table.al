@@ -40,7 +40,7 @@ table 50135 OptionLine
         field(9; iID; code[20])
         {
             DataClassification = ToBeClassified;
-            
+
         }
         field(10; preOrder; Integer)
         {
@@ -55,6 +55,17 @@ table 50135 OptionLine
         field(12; line; Integer)
         {
             DataClassification = ToBeClassified;
+        }
+        field(13; preassemblyID; Integer)
+        {
+            DataClassification = ToBeClassified;
+            TableRelation = Option.AssemblyId where(Id = field(oID));
+        }
+        field(14; sufassemblyID; Integer)
+        {
+            DataClassification = ToBeClassified;
+            TableRelation = "Option Suffix".AssemblyChange where(OptionID = field(oID), "Suffix Designator" = field(sufSelection));
+
         }
     }
 

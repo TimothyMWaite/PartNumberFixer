@@ -90,7 +90,7 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
 
     procedure openPickPage(): Text[100]
     var
-        lRec, ol : Record OptionLine;
+        lRec, ol, fpg : Record OptionLine;
         sRec: Record SPList;
         iRec: Record Item;
         ioRec: Record "Item Option Line";
@@ -103,7 +103,7 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
         ioRec.SetFilter("ItemNo.", rec."No.");
         ol.Reset();
         ol.SetFilter(docID, rec."Document No.");
-        ol.SetRange(iID, rec."No.");
+        // ol.SetRange(iID, rec."No.");
         ol.SetRange(line, rec."Line No.");
         if not ol.FindSet() then begin
             if ioRec.FindSet() then begin
@@ -124,20 +124,20 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
             end;
         end;
         lRec.Reset();
-        lRec.SetRange(iID, rec."No.");
-        lRec.SetFilter(line, Format(rec."Line No."));
-        lRec.SetFilter(docID, rec."Document No.");
+        // lRec.SetRange(iID, rec."No.");
 
         opPage.SetTableView(ol);
+        Message('Filters: %1', ol.GetFilters);
         opPage.setI(rec);
         Commit();
         if opPage.RunModal() = Action::OK then begin
 
 
-            getNewPN();
+
             CurrPage.Update(false);
             // Clear(opPage);
         end;
+        
     end;
 
     procedure getNewPN()
