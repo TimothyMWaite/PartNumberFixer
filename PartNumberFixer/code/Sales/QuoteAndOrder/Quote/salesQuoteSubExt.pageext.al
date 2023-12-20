@@ -80,8 +80,35 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
                 UpdateSalesLineFields.UpdateFieldsOnDescChange(Rec, xRec);
             end;
         }
+        modify("Qty. to Assemble to Order")
+        {
+            trigger OnAfterValidate()
+
+            begin
+                updateAssemblyInfo();
+            end;
+        }
 
 
+    }
+    actions
+    {
+        addfirst(Page)
+        {
+            action("Trigger the thing")
+            {
+                trigger OnAction()
+                var
+                    dRec: Record "Assembly Line";
+                begin
+                    dRec.SetFilter("Document No.", rec."Document No.");
+                    dRec.SetRange("Line No.", rec."Line No.");
+                    if dRec.findSet() then begin
+                        Message('%1', dRec);
+                    end;
+                end;
+            }
+        }
     }
     trigger OnInsertRecord(BelowxRec: Boolean): Boolean
     begin
@@ -127,7 +154,7 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
         // lRec.SetRange(iID, rec."No.");
 
         opPage.SetTableView(ol);
-        Message('Filters: %1', ol.GetFilters);
+        // Message('Filters: %1', ol.GetFilters);
         opPage.setI(rec);
         Commit();
         if opPage.RunModal() = Action::OK then begin
@@ -137,7 +164,72 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
             CurrPage.Update(false);
             // Clear(opPage);
         end;
-        
+
+    end;
+
+    procedure updateAssemblyInfo()
+    var
+        aRec: Record "Option Assembly Line";
+        lRec: Record OptionLine;
+        bStr: Text[1];
+    begin
+        bStr := '';
+        aRec.Reset();
+        lRec.Reset();
+        lRec.SetFilter(docID, rec."Document No.");
+        lRec.SetRange(line, rec."Line No.");
+        if lRec.FindSet() then begin
+            repeat
+                if lRec.preSelection <> '' then begin
+                    aRec.Reset();
+                    aRec.SetRange("Option ID", lRec.oID);
+                    aRec.SetFilter(Designator, lRec.preSelection);
+                    if aRec.FindSet() then begin
+                        repeat
+                            Message('activated for %1', aRec.Designator);
+                            updateAssembly(aRec);
+                        until aRec.Next() = 0;
+                    end;
+                end;
+                if lRec.sufSelection <> '' then begin
+                    aRec.Reset();
+                    aRec.SetRange("Option ID", lRec.oID);
+                    aRec.SetFilter(Designator, lRec.sufSelection);
+                    if aRec.FindSet() then begin
+                        repeat
+                            Message('activated for %1', aRec.Designator);
+                            updateAssembly(aRec);
+                        until aRec.Next() = 0;
+                    end;
+                end;
+            until lRec.Next() = 0;
+        end;
+
+    end;
+
+    procedure updateAssembly(a: Record "Option Assembly Line"): Boolean
+    var
+
+        dRec: Record "Assembly Line";
+        iRec: Record Item;
+    begin
+
+        dRec.init();
+        dRec."Document No." := rec."Document No.";
+        dRec."Document Type" := rec."Document Type";
+        dRec."Line No." := rec."Line No.";
+        dRec.Type := dRec.Type::Item;
+        dRec."No." := a.No;
+        dRec.Description := a.Description;
+        dRec."Unit of Measure Code" := a.UOM;
+        dRec."Quantity per" := a.Qty;
+        dRec."Quantity (Base)" := a.Qty * rec.Quantity;
+        if iRec.get(a.No) then begin
+            dRec."Cost Amount" := iRec."Unit Cost" * dRec.Quantity;
+        end;
+        if dRec.Insert() then
+            Message('%1', dRec);
+
     end;
 
     procedure getNewPN()
@@ -157,4 +249,6 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
         opPage: Page OptionLineList;
         oCU: Codeunit "OP Page Manager";
         hRec: Record "Sales Order Entity Buffer";
+        p: Page "Assemble-to-Order Lines";
+
 }

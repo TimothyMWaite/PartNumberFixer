@@ -6,6 +6,7 @@ codeunit 50103 "My Install Codeunit"
     begin
         PopulateIntermediaryTable();
         // InsertTestData();
+        assTest();
     end;
 
     procedure PopulateIntermediaryTable()
@@ -132,5 +133,50 @@ codeunit 50103 "My Install Codeunit"
         // Set other fields as necessary
         SPRec.Insert();
         // end;
+    end;
+
+    procedure assTest()
+    var
+        ioRec: Record "Item Option Line";
+        oRec: Record Option;
+        osRec: Record "Option Suffix";
+        aRec: Record "Option Assembly Line";
+    begin
+        oRec.Init();
+        oRec.Id := oRec.getNewId();
+        oRec.Name := 'Networking';
+        oRec."Prefix Designator" := 'N';
+        oRec."Prefix Order" := 1000;
+        oRec."Suffix Order" := 200;
+        oRec.Insert();
+
+        osRec.Init();
+        osRec."Suffix Designator" := '/5/110';
+        osRec.Line := 0001;
+        osRec.OptionID := oRec.Id;
+        osRec."Suffix Order" := oRec."Suffix Order";
+        osRec.AssemblyChange := 1000;
+        osRec.Insert();
+
+        aRec.Init();
+        aRec.ID := 1000;
+        aRec."Option ID" := oRec.Id;
+        aRec.No := '110-POWER-SUPPLY';
+        aRec.Description := '110 TRANSFORMERS WITH SMALLER & LIGHTER PLUGIN';
+        aRec."Line No." := 0001;
+        aRec.Qty := 1;
+        aRec.Designator := osRec."Suffix Designator";
+        aRec.Insert();
+
+        ioRec.Init();
+        ioRec.lID := ioRec.getNewID();
+        ioRec."Line No." := 0001;
+        ioRec."ItemNo." := 'LDCBS1X2-TNC';
+        ioRec.OptionID := oRec.Id;
+        ioRec.OptionName := oRec.Name;
+        ioRec."Price Change" := 100;
+        ioRec.Caption := 'Networking';
+        ioRec.Insert();
+
     end;
 }

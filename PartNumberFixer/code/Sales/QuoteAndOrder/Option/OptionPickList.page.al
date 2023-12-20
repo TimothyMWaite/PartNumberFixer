@@ -112,7 +112,7 @@ page 50136 OptionLineList
         r: Record OptionLine;
     begin
         ClearAll();
-        updateAssemblyInfo();
+
     end;
 
     trigger OnInsertRecord(BelowxRec: Boolean): Boolean
@@ -186,8 +186,8 @@ page 50136 OptionLineList
             until lRec.Next() = 0;
         end;
         fPN := p + iRec.PartNo + s;
-
-        rec.Modify(false);
+        if rec.oID <> 0 then
+            rec.Modify(false);
         li.Reset();
         li.SetFilter(docID, rec.docID);
         li.SetRange(line, rec.line);
@@ -202,55 +202,11 @@ page 50136 OptionLineList
         end;
         slRec.PartNo := fPN;
         slRec.Modify(false);
-        Message('%1, %2', rec.sufassemblyID, rec.preassemblyID);
+        // Message('%1, %2', rec.sufassemblyID, rec.preassemblyID);
     end;
 
-    procedure updateAssemblyInfo()
-    var
-        aRec: Record "Option Assembly Line";
-        lRec: Record OptionLine;
-        bStr: Text[1];
-    begin
-        bStr := '';
-        aRec.Reset();
-        lRec.Reset();
-        lRec.SetFilter(docID, rec.docID);
-        lRec.SetRange(line, rec.line);
-        if lRec.FindSet() then begin
-            repeat
-                if lRec.preSelection <> '' then begin
-                    aRec.Reset();
-                    aRec.SetRange("Option ID", lRec.oID);
-                    aRec.SetFilter(Designator, lRec.preSelection);
-                    if aRec.FindSet() then begin
-                        repeat
-                            updateAssembly(aRec);
-                        until aRec.Next() = 0;
-                    end;
-                end;
-                if lRec.sufSelection <> '' then begin
-                    aRec.Reset();
-                    aRec.SetRange("Option ID", lRec.oID);
-                    aRec.SetFilter(Designator, lRec.sufSelection);
-                    if aRec.FindSet() then begin
-                        repeat
-                            updateAssembly(aRec);
-                        until aRec.Next() = 0;
-                    end;
-                end;
-            until lRec.Next() = 0;
-        end;
 
-    end;
-    procedure updateAssembly(a: Record "Option Assembly Line"): Boolean
-    var
-    bRec: Record "BOM Component";
-        dRec: Record "Assemble-to-Order Link";
-    begin
-        
-        bRec.SetFilter("Parent Item No.", rec.iID);
-        
-    end;
+
     var
         iRec: Record Item;
         p, s : text[50];
