@@ -73,6 +73,14 @@ table 50106 "Option"
     }
     trigger OnModify()
     var
+
+    begin
+
+        addToSPL();
+    end;
+
+    procedure addToSPL()
+    var
         oRec: Record Option;
         spl: Record SPList;
     begin
@@ -102,7 +110,6 @@ table 50106 "Option"
                 end;
             end;
         end;
-
     end;
 
     procedure getNewId(): Integer

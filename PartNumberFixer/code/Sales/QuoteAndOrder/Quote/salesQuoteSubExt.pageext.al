@@ -23,8 +23,10 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
                 var
                     UpdateSalesLineFields: Codeunit UpdateSalesLineFields;
                     sHead: Record "Sales Order Entity Buffer";
+                    ioRec: Record "Item Option Line";
+                    slRec, badRec : Record "Sales Line";
                 begin
-
+                    Message('%1', rec.PartNo);
                     UpdateSalesLineFields.UpdateFieldsOnPartNoChange(Rec);
                     if sHead.Get(rec."Document No.") then begin
                         if (sHead."Bill-to Customer No." <> '') then begin
@@ -34,16 +36,46 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
                             end;
                         end;
                     end;
-                    if rec."Line No." <> 0 then
-                        openPickPage();
+
+                    if rec."Line No." <> 0 then begin
+                        rec.Modify(true);
+                    end else begin
+                        slRec.Reset();
+                        slRec.SetRange("Document No.", rec."Document No.");
+                        if slRec.FindLast() then begin
+                            Message('r: %1 sl: %2', rec."Line No.", slRec."Line No.");
+                            rec."Line No." := slRec."Line No." + 10000;
+                        end else begin
+                            rec."Line No." := 10000;
+                        end;
+                        ioRec.Reset();
+                        ioRec.SetFilter("ItemNo.", rec."No.");
+                        if rec.Insert(ioRec.FindFirst()) then begin
+                            ioRec.Reset();
+                            ioRec.SetFilter("ItemNo.", rec."No.");
+                            if ioRec.FindFirst() then begin
+                                openPickPage();
+                            end;
+                        end;
+                    end;
+
+
                     CurrPage.Update(false);
                 end;
 
                 // UpdateSalesLineFields.UpdateFields(Rec, xRec, ((xRec."No." = '') and (xRec.PartNo = '')));
 
                 trigger OnDrillDown()
+                var
+                    UpdateSalesLineFields: Codeunit UpdateSalesLineFields;
+                    sHead: Record "Sales Order Entity Buffer";
+                    ioRec: Record "Item Option Line";
                 begin
-                    openPickPage();
+                    ioRec.Reset();
+                    ioRec.SetFilter("ItemNo.", rec."No.");
+                    if ioRec.FindFirst() then begin
+                        openPickPage();
+                    end;
 
                 end;
 
@@ -111,9 +143,63 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
         }
     }
     trigger OnInsertRecord(BelowxRec: Boolean): Boolean
+    var
+        ioRec: Record "Item Option Line";
     begin
-        openPickPage();
+        if ((rec."Line No." / 5000) mod 2) = 1 then
+            exit(false);
+        Message('%1', rec."Line No.");
+        ioRec.Reset();
+        ioRec.SetFilter("ItemNo.", rec."No.");
+        if ioRec.FindFirst() then begin
+            openPickPage();
+        end;
     end;
+
+    trigger OnAfterGetRecord()
+    var
+        ioRec: Record "Item Option Line";
+        olRec: Record "OptionLine";
+        iRec: Record item;
+        p, s : Text[50];
+
+    begin
+        p := '';
+        s := '';
+
+        ioRec.Reset();
+        ioRec.SetFilter("ItemNo.", rec."No.");
+        if ioRec.FindSet() then begin
+            olRec.Reset();
+            olRec.SetFilter(docID, rec."Document No.");
+            olRec.SetRange(line, rec."Line No.");
+            olRec.SetCurrentKey(sufOrder, preOrder);
+            olRec.SetAscending(sufOrder, true);
+            olRec.SetAscending(preOrder, true);
+            if olRec.FindSet() then begin
+                s += olRec.sufSelection;
+                p += olRec.preSelection;
+            end;
+
+        end;
+        if iRec.get(rec."No.") then begin
+            rec.PartNo := p + iRec.PartNo + s;
+        end;
+        CurrPage.Update(false);
+    end;
+
+    // trigger OnModifyRecord(): Boolean
+    // var
+    //     ioRec: Record "Item Option Line";
+
+    // begin
+    //     ioRec.Reset();
+    //     ioRec.SetFilter("ItemNo.", rec."No.");
+    //     if ioRec.FindFirst() then begin
+    //         openPickPage();
+    //     end;
+    // end;
+
 
     procedure openPickPage(): Text[100]
     var
@@ -171,6 +257,8 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
     var
         aRec: Record "Option Assembly Line";
         lRec: Record OptionLine;
+        dRec: Record "Assembly Line";
+        iRec: Record Item;
         bStr: Text[1];
     begin
         bStr := '';
@@ -187,7 +275,22 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
                     if aRec.FindSet() then begin
                         repeat
                             Message('activated for %1', aRec.Designator);
-                            updateAssembly(aRec);
+                            dRec.Reset();
+                            dRec.init();
+                            dRec.Type := dRec.Type::Item;
+                            dRec."Document Type" := rec."Document Type"::Quote;
+                            dRec."Document No." := rec."Document No.";
+                            dRec."Line No." := rec."Line No.";
+                            dRec."No." := aRec.No;
+                            dRec.Description := aRec.Description;
+                            dRec."Unit of Measure Code" := aRec.UOM;
+                            dRec."Quantity per" := aRec.Qty;
+                            dRec."Quantity (Base)" := aRec.Qty * rec.Quantity;
+                            if iRec.get(aRec.No) then begin
+                                dRec."Cost Amount" := iRec."Unit Cost" * dRec.Quantity;
+                            end;
+                            if dRec.Insert() then
+                                Message('%1', dRec);
                         until aRec.Next() = 0;
                     end;
                 end;
@@ -198,41 +301,34 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
                     if aRec.FindSet() then begin
                         repeat
                             Message('activated for %1', aRec.Designator);
-                            updateAssembly(aRec);
+                            dRec.Reset();
+                            dRec.init();
+                            dRec.Type := dRec.Type::Item;
+                            dRec."Document Type" := rec."Document Type"::Quote;
+                            dRec."Document No." := rec."Document No.";
+                            dRec."Line No." := rec."Line No.";
+                            dRec."No." := aRec.No;
+                            dRec.Description := aRec.Description;
+                            dRec."Unit of Measure Code" := aRec.UOM;
+                            dRec."Quantity per" := aRec.Qty;
+                            dRec."Quantity (Base)" := aRec.Qty * rec.Quantity;
+                            if iRec.get(aRec.No) then begin
+                                dRec."Cost Amount" := iRec."Unit Cost" * dRec.Quantity;
+                            end;
+                            if dRec.Insert() then
+                                Message('%1', dRec);
                         until aRec.Next() = 0;
                     end;
                 end;
+                Message('%1', dRec);
             until lRec.Next() = 0;
         end;
 
     end;
 
-    procedure updateAssembly(a: Record "Option Assembly Line"): Boolean
-    var
 
-        dRec: Record "Assembly Line";
-        iRec: Record Item;
-    begin
 
-        dRec.init();
-        dRec."Document No." := rec."Document No.";
-        dRec."Document Type" := rec."Document Type";
-        dRec."Line No." := rec."Line No.";
-        dRec.Type := dRec.Type::Item;
-        dRec."No." := a.No;
-        dRec.Description := a.Description;
-        dRec."Unit of Measure Code" := a.UOM;
-        dRec."Quantity per" := a.Qty;
-        dRec."Quantity (Base)" := a.Qty * rec.Quantity;
-        if iRec.get(a.No) then begin
-            dRec."Cost Amount" := iRec."Unit Cost" * dRec.Quantity;
-        end;
-        if dRec.Insert() then
-            Message('%1', dRec);
-
-    end;
-
-    procedure getNewPN()
+    procedure getPNwOpts()
     var
         lRec: Record OptionLine;
     begin

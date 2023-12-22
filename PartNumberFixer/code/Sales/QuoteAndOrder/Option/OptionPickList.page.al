@@ -164,45 +164,48 @@ page 50136 OptionLineList
     var
         lRec, ol, li : Record OptionLine;
     begin
-        p := '';
-        s := '';
-        rec.pn := iRec.PartNo;
+        if slRec."Line No." <> 0 then begin
 
-        lRec.Reset();
-        lRec.SetFilter(docId, rec.docID);
-        lRec.SetRange(iID, rec.iID);
-        lRec.SetRange(line, rec.line);
-        lRec.SetCurrentKey(preOrder, sufOrder);
+            p := '';
+            s := '';
+            rec.pn := iRec.PartNo;
 
-        lRec.SetAscending(preOrder, true);
-        lRec.SetAscending(sufOrder, true);
-        if lRec.FindSet() then begin
-            repeat
-                if lRec.preSelection <> '' then
-                    p += lRec.preSelection;
-                if lRec.sufSelection <> '' then
-                    s += lRec.sufSelection;
-                lRec.Modify(false);
-            until lRec.Next() = 0;
+            lRec.Reset();
+            lRec.SetFilter(docId, rec.docID);
+            lRec.SetRange(iID, rec.iID);
+            lRec.SetRange(line, rec.line);
+            lRec.SetCurrentKey(preOrder, sufOrder);
+
+            lRec.SetAscending(preOrder, true);
+            lRec.SetAscending(sufOrder, true);
+            if lRec.FindSet() then begin
+                repeat
+                    if lRec.preSelection <> '' then
+                        p += lRec.preSelection;
+                    if lRec.sufSelection <> '' then
+                        s += lRec.sufSelection;
+                    lRec.Modify(false);
+                until lRec.Next() = 0;
+            end;
+            fPN := p + iRec.PartNo + s;
+            if rec.oID <> 0 then
+                rec.Modify(false);
+            li.Reset();
+            li.SetFilter(docID, rec.docID);
+            li.SetRange(line, rec.line);
+            if ol.FindSet() then begin
+                repeat
+                    if li.Id <> 0 then begin
+
+                        li.pn := fPN;
+                        li.Modify(false);
+                    end;
+                until li.Next() = 0;
+            end;
+            slRec.PartNo := fPN;
+
+            // Message('%1, %2', rec.sufassemblyID, rec.preassemblyID);
         end;
-        fPN := p + iRec.PartNo + s;
-        if rec.oID <> 0 then
-            rec.Modify(false);
-        li.Reset();
-        li.SetFilter(docID, rec.docID);
-        li.SetRange(line, rec.line);
-        if ol.FindSet() then begin
-            repeat
-                if li.Id <> 0 then begin
-
-                    li.pn := fPN;
-                    li.Modify(false);
-                end;
-            until li.Next() = 0;
-        end;
-        slRec.PartNo := fPN;
-        slRec.Modify(false);
-        // Message('%1, %2', rec.sufassemblyID, rec.preassemblyID);
     end;
 
 

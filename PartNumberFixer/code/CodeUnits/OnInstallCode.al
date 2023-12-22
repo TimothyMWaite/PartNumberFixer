@@ -78,22 +78,22 @@ codeunit 50103 "My Install Codeunit"
     //     // Insert test data into Option Suffix table
     // end;
 
-    // procedure addSPlist(var SPRec: Record SPList; OptionRec: Record Option)
-    // begin
-    //     // Assuming we are handling a prefix
-    //     SPRec.SetFilter(OptionID, Format(OptionRec.Id));
-    //     SPRec.SetRange(Designator, OptionRec."Prefix Designator");
-    //     if not SPRec.FindFirst() then begin
-    //         SPRec.Init();
-    //         SPRec.ID := SPRec.getNewID(); // This should be a unique value, consider using a number series here
-    //         SPRec.OptionID := OptionRec.Id;
-    //         SPRec.Prefix := true;
-    //         SPRec.Order := OptionRec."Prefix Order";
-    //         SPRec.Designator := OptionRec."Prefix Designator";
-    //         // Set other fields as necessary
-    //         SPRec.Insert();
-    //     end;
-    // end;
+    procedure addSPlist(var SPRec: Record SPList; OptionRec: Record Option)
+    begin
+        // Assuming we are handling a prefix
+        SPRec.SetFilter(OptionID, Format(OptionRec.Id));
+        SPRec.SetRange(Designator, OptionRec."Prefix Designator");
+        if not SPRec.FindFirst() then begin
+            SPRec.Init();
+            SPRec.ID := SPRec.getNewID(); // This should be a unique value, consider using a number series here
+            SPRec.OptionID := OptionRec.Id;
+            SPRec.Prefix := true;
+            SPRec.Order := OptionRec."Prefix Order";
+            SPRec.Designator := OptionRec."Prefix Designator";
+            // Set other fields as necessary
+            SPRec.Insert();
+        end;
+    end;
 
     procedure addCCtoAssembly()
     var
@@ -141,39 +141,40 @@ codeunit 50103 "My Install Codeunit"
         oRec: Record Option;
         osRec: Record "Option Suffix";
         aRec: Record "Option Assembly Line";
+        spRec: Record SPList;
     begin
         oRec.Init();
-        oRec.Id := oRec.getNewId();
+        oRec.Id := 1000;
         oRec.Name := 'Networking';
         oRec."Prefix Designator" := 'N';
         oRec."Prefix Order" := 1000;
         oRec."Suffix Order" := 200;
         oRec.Insert();
-
+        addSPlist(spRec, oRec);
         osRec.Init();
         osRec."Suffix Designator" := '/5/110';
         osRec.Line := 0001;
-        osRec.OptionID := oRec.Id;
-        osRec."Suffix Order" := oRec."Suffix Order";
+        osRec.OptionID := 1000;
+        osRec."Suffix Order" := 200;
         osRec.AssemblyChange := 1000;
         osRec.Insert();
-
+        addSPlist(spRec, osRec, oRec."Suffix Order");
         aRec.Init();
         aRec.ID := 1000;
-        aRec."Option ID" := oRec.Id;
+        aRec."Option ID" := 1000;
         aRec.No := '110-POWER-SUPPLY';
         aRec.Description := '110 TRANSFORMERS WITH SMALLER & LIGHTER PLUGIN';
         aRec."Line No." := 0001;
         aRec.Qty := 1;
-        aRec.Designator := osRec."Suffix Designator";
+        aRec.Designator := '/5/110';
         aRec.Insert();
 
         ioRec.Init();
-        ioRec.lID := ioRec.getNewID();
+        ioRec.lID := 1000;
         ioRec."Line No." := 0001;
         ioRec."ItemNo." := 'LDCBS1X2-TNC';
-        ioRec.OptionID := oRec.Id;
-        ioRec.OptionName := oRec.Name;
+        ioRec.OptionID := 1000;
+        ioRec.OptionName := 'Networking';
         ioRec."Price Change" := 100;
         ioRec.Caption := 'Networking';
         ioRec.Insert();
