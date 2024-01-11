@@ -114,10 +114,26 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
         }
         modify("Qty. to Assemble to Order")
         {
-            trigger OnAfterValidate()
+            trigger OnBeforeValidate()
 
             begin
+
                 updateAssemblyInfo();
+
+            end;
+
+            trigger OnAfterValidate()
+            var
+                dR2: Record "Assembly Line";
+            begin
+                dR2.SetFilter("Document Type", Format(Rec."Document Type"));
+                dR2.SetFilter("Document No.", Format(Rec."Document No."));
+                dR2.SetFilter("Line No.", Format(Rec."Line No."));
+                if dR2.FindLast() then begin
+                    DisplayAssemblyLineRecordFields(d, dR2);
+                end;
+
+
             end;
         }
 
@@ -125,23 +141,34 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
     }
     actions
     {
-        addfirst(Page)
+        addafter(Page)
         {
-            action("Trigger the thing")
+            group(DOIT)
             {
-                trigger OnAction()
-                var
-                    dRec: Record "Assembly Line";
-                begin
-                    dRec.SetFilter("Document No.", rec."Document No.");
-                    dRec.SetRange("Line No.", rec."Line No.");
-                    if dRec.findSet() then begin
-                        Message('%1', dRec);
+                action(DOTHETHING)
+                {
+                    Visible = true;
+                    ApplicationArea = All;
+                    Caption = 'DO THE THING';
+                    trigger OnAction()
+                    var
+                        dRec: Record "Assembly Header";
+                    begin
+                        // dRec.SetFilter("Document No.", rec."Document No.");
+                        // dRec.SetRange("Line No.", rec."Line No.");
+
+                        if dRec.findSet() then begin
+                            repeat
+                                Message('%1', dRec);
+
+                            until dRec.Next() = 0;
+                        end;
                     end;
-                end;
+                }
             }
         }
     }
+
     trigger OnInsertRecord(BelowxRec: Boolean): Boolean
     var
         ioRec: Record "Item Option Line";
@@ -200,6 +227,100 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
     //     end;
     // end;
 
+    procedure DisplayAssemblyLineRecordFields(Record1: Record "Assembly Line"; Record2: Record "Assembly Line")
+    var
+        DisplayText: Text;
+    begin
+        // Displaying each field for both records
+        DisplayText := CreateDisplayText('Type', Format(Record1.Type), Format(Record2.Type));
+        Message(DisplayText);
+
+        DisplayText := CreateDisplayText('Document Type', Format(Record1."Document Type"), Format(Record2."Document Type"));
+        Message(DisplayText);
+
+        DisplayText := CreateDisplayText('Document No.', Record1."Document No.", Record2."Document No.");
+        Message(DisplayText);
+
+        DisplayText := CreateDisplayText('Line No.', Format(Record1."Line No."), Format(Record2."Line No."));
+        Message(DisplayText);
+
+        DisplayText := CreateDisplayText('No.', Record1."No.", Record2."No.");
+        Message(DisplayText);
+
+        DisplayText := CreateDisplayText('Description', Record1.Description, Record2.Description);
+        Message(DisplayText);
+
+        DisplayText := CreateDisplayText('Description 2', Record1."Description 2", Record2."Description 2");
+        Message(DisplayText);
+
+        DisplayText := CreateDisplayText('Variant Code', Record1."Variant Code", Record2."Variant Code");
+        Message(DisplayText);
+
+        DisplayText := CreateDisplayText('Location Code', Record1."Location Code", Record2."Location Code");
+        Message(DisplayText);
+
+        DisplayText := CreateDisplayText('Unit of Measure Code', Record1."Unit of Measure Code", Record2."Unit of Measure Code");
+        Message(DisplayText);
+
+        DisplayText := CreateDisplayText('Quantity per', Format(Record1."Quantity per"), Format(Record2."Quantity per"));
+        Message(DisplayText);
+
+        DisplayText := CreateDisplayText('Quantity', Format(Record1.Quantity), Format(Record2.Quantity));
+        Message(DisplayText);
+
+        DisplayText := CreateDisplayText('Reserved Quantity', Format(Record1."Reserved Quantity"), Format(Record2."Reserved Quantity"));
+        Message(DisplayText);
+
+        DisplayText := CreateDisplayText('Consumed Quantity', Format(Record1."Consumed Quantity"), Format(Record2."Consumed Quantity"));
+        Message(DisplayText);
+
+        DisplayText := CreateDisplayText('Qty. Picked', Format(Record1."Qty. Picked"), Format(Record2."Qty. Picked"));
+        Message(DisplayText);
+
+        DisplayText := CreateDisplayText('Pick Qty.', Format(Record1."Pick Qty."), Format(Record2."Pick Qty."));
+        Message(DisplayText);
+
+        DisplayText := CreateDisplayText('Due Date', Format(Record1."Due Date"), Format(Record2."Due Date"));
+        Message(DisplayText);
+
+        DisplayText := CreateDisplayText('Lead-Time Offset', Format(Record1."Lead-Time Offset"), Format(Record2."Lead-Time Offset"));
+        Message(DisplayText);
+
+        DisplayText := CreateDisplayText('Shortcut Dimension 1 Code', Record1."Shortcut Dimension 1 Code", Record2."Shortcut Dimension 1 Code");
+        Message(DisplayText);
+
+        DisplayText := CreateDisplayText('Shortcut Dimension 2 Code', Record1."Shortcut Dimension 2 Code", Record2."Shortcut Dimension 2 Code");
+        Message(DisplayText);
+
+        DisplayText := CreateDisplayText('Bin Code', Record1."Bin Code", Record2."Bin Code");
+        Message(DisplayText);
+
+        DisplayText := CreateDisplayText('Inventory Posting Group', Record1."Inventory Posting Group", Record2."Inventory Posting Group");
+        Message(DisplayText);
+
+        DisplayText := CreateDisplayText('Unit Cost', Format(Record1."Unit Cost"), Format(Record2."Unit Cost"));
+        Message(DisplayText);
+
+        DisplayText := CreateDisplayText('Cost Amount', Format(Record1."Cost Amount"), Format(Record2."Cost Amount"));
+        Message(DisplayText);
+
+        DisplayText := CreateDisplayText('Qty. per Unit of Measure', Format(Record1."Qty. per Unit of Measure"), Format(Record2."Qty. per Unit of Measure"));
+        Message(DisplayText);
+
+        DisplayText := CreateDisplayText('Resource Usage Type', Format(Record1."Resource Usage Type"), Format(Record2."Resource Usage Type"));
+        Message(DisplayText);
+
+        DisplayText := CreateDisplayText('Appl.-to Item Entry', Format(Record1."Appl.-to Item Entry"), Format(Record2."Appl.-to Item Entry"));
+        Message(DisplayText);
+
+        DisplayText := CreateDisplayText('Appl.-from Item Entry', Format(Record1."Appl.-from Item Entry"), Format(Record2."Appl.-from Item Entry"));
+        Message(DisplayText);
+    end;
+
+    local procedure CreateDisplayText(FieldName: Text; Value1: Text; Value2: Text): Text
+    begin
+        exit(StrSubstNo('%1 -> Record1: %2, Record2: %3', FieldName, Value1, Value2));
+    end;
 
     procedure openPickPage(): Text[100]
     var
@@ -253,13 +374,37 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
 
     end;
 
+    procedure addAssLine()
+    var
+        AssemblyHeader: Record "Assembly Header";
+        AssemblyLine: Record "Assembly Line";
+        AssemblyLineMgt: Codeunit "Assembly Line Management";
+    begin
+        // Initialize or retrieve your AssemblyHeader record
+        // ...
+    
+        // Insert a new line for the Assembly Header
+        AssemblyLineMgt.InsertAsmLine(AssemblyHeader, AssemblyLine, false);
+
+        // Set the details of the new assembly line
+        // AssemblyLine.Validate("No.", YourItemNo); // Replace YourItemNo with the actual item number
+        // AssemblyLine.Validate(Quantity, YourQuantity); // Replace YourQuantity with the actual quantity
+                                                       // Set other fields as needed
+                                                       // ...
+
+        // Insert the assembly line record into the database
+        AssemblyLine.Insert();
+    end;
+
     procedure updateAssemblyInfo()
     var
         aRec: Record "Option Assembly Line";
         lRec: Record OptionLine;
-        dRec: Record "Assembly Line";
+        dRec, c, dRec2 : Record "Assembly Line";
         iRec: Record Item;
         bStr: Text[1];
+        iNo: Code[20];
+        p: Page "Assemble-to-Order Lines";
     begin
         bStr := '';
         aRec.Reset();
@@ -288,9 +433,15 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
                             dRec."Quantity (Base)" := aRec.Qty * rec.Quantity;
                             if iRec.get(aRec.No) then begin
                                 dRec."Cost Amount" := iRec."Unit Cost" * dRec.Quantity;
+                                iNo := iRec."No.";
                             end;
-                            if dRec.Insert() then
-                                Message('%1', dRec);
+                            if dRec.Insert() then begin
+                                d := dRec;
+
+
+                            end else begin
+                                Message('Failed');
+                            end;
                         until aRec.Next() = 0;
                     end;
                 end;
@@ -314,9 +465,15 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
                             dRec."Quantity (Base)" := aRec.Qty * rec.Quantity;
                             if iRec.get(aRec.No) then begin
                                 dRec."Cost Amount" := iRec."Unit Cost" * dRec.Quantity;
+                                iNo := iRec."No.";
                             end;
-                            if dRec.Insert() then
-                                Message('%1', dRec);
+
+                            if dRec.Insert() then begin
+                                d := dRec;
+                            end else begin
+                                Message('Failed');
+                            end;
+
                         until aRec.Next() = 0;
                     end;
                 end;
@@ -346,5 +503,7 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
         oCU: Codeunit "OP Page Manager";
         hRec: Record "Sales Order Entity Buffer";
         p: Page "Assemble-to-Order Lines";
+        d: Record "Assembly Line";
+        d2: Record "Assembly Header";
 
 }
