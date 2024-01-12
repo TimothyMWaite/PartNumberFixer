@@ -118,7 +118,6 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
 
             begin
 
-                updateAssemblyInfo();
 
             end;
 
@@ -126,13 +125,17 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
             var
                 dR2: Record "Assembly Line";
             begin
-                dR2.SetFilter("Document Type", Format(Rec."Document Type"));
-                dR2.SetFilter("Document No.", Format(Rec."Document No."));
-                dR2.SetFilter("Line No.", Format(Rec."Line No."));
-                if dR2.FindLast() then begin
-                    DisplayAssemblyLineRecordFields(d, dR2);
+                // dR2.SetFilter("Document Type", Format(Rec."Document Type"));
+                // dR2.SetFilter("Document No.", Format(Rec."Document No."));
+                // dR2.SetFilter("Line No.", Format(Rec."Line No."));
+                if dR2.FindSet() then begin
+                    repeat
+                        Message('docNO: %1 /No: %2 /From: %3 /To: %4', dR2."Document No.", dR2."No.", dR2."Appl.-from Item Entry", dR2."Appl.-to Item Entry");
+                    until dR2.Next() = 0;
                 end;
 
+
+                updateAssemblyInfo();
 
             end;
         }
@@ -152,16 +155,18 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
                     Caption = 'DO THE THING';
                     trigger OnAction()
                     var
-                        dRec: Record "Assembly Header";
+                        dR2: Record "Assembly Line";
                     begin
                         // dRec.SetFilter("Document No.", rec."Document No.");
                         // dRec.SetRange("Line No.", rec."Line No.");
 
-                        if dRec.findSet() then begin
+                        if dR2.FindSet() then begin
                             repeat
-                                Message('%1', dRec);
-
-                            until dRec.Next() = 0;
+                                Message('docNO: %1 /No: %2 /From: %3 /To: %4', dR2."Document No.", dR2."No.");
+                                if CopyStr(dR2."Document No.", 1, 1) = 'S' then begin
+                                    dR2.Delete();
+                                end;
+                            until dR2.Next() = 0;
                         end;
                     end;
                 }
@@ -227,95 +232,7 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
     //     end;
     // end;
 
-    procedure DisplayAssemblyLineRecordFields(Record1: Record "Assembly Line"; Record2: Record "Assembly Line")
-    var
-        DisplayText: Text;
-    begin
-        // Displaying each field for both records
-        DisplayText := CreateDisplayText('Type', Format(Record1.Type), Format(Record2.Type));
-        Message(DisplayText);
 
-        DisplayText := CreateDisplayText('Document Type', Format(Record1."Document Type"), Format(Record2."Document Type"));
-        Message(DisplayText);
-
-        DisplayText := CreateDisplayText('Document No.', Record1."Document No.", Record2."Document No.");
-        Message(DisplayText);
-
-        DisplayText := CreateDisplayText('Line No.', Format(Record1."Line No."), Format(Record2."Line No."));
-        Message(DisplayText);
-
-        DisplayText := CreateDisplayText('No.', Record1."No.", Record2."No.");
-        Message(DisplayText);
-
-        DisplayText := CreateDisplayText('Description', Record1.Description, Record2.Description);
-        Message(DisplayText);
-
-        DisplayText := CreateDisplayText('Description 2', Record1."Description 2", Record2."Description 2");
-        Message(DisplayText);
-
-        DisplayText := CreateDisplayText('Variant Code', Record1."Variant Code", Record2."Variant Code");
-        Message(DisplayText);
-
-        DisplayText := CreateDisplayText('Location Code', Record1."Location Code", Record2."Location Code");
-        Message(DisplayText);
-
-        DisplayText := CreateDisplayText('Unit of Measure Code', Record1."Unit of Measure Code", Record2."Unit of Measure Code");
-        Message(DisplayText);
-
-        DisplayText := CreateDisplayText('Quantity per', Format(Record1."Quantity per"), Format(Record2."Quantity per"));
-        Message(DisplayText);
-
-        DisplayText := CreateDisplayText('Quantity', Format(Record1.Quantity), Format(Record2.Quantity));
-        Message(DisplayText);
-
-        DisplayText := CreateDisplayText('Reserved Quantity', Format(Record1."Reserved Quantity"), Format(Record2."Reserved Quantity"));
-        Message(DisplayText);
-
-        DisplayText := CreateDisplayText('Consumed Quantity', Format(Record1."Consumed Quantity"), Format(Record2."Consumed Quantity"));
-        Message(DisplayText);
-
-        DisplayText := CreateDisplayText('Qty. Picked', Format(Record1."Qty. Picked"), Format(Record2."Qty. Picked"));
-        Message(DisplayText);
-
-        DisplayText := CreateDisplayText('Pick Qty.', Format(Record1."Pick Qty."), Format(Record2."Pick Qty."));
-        Message(DisplayText);
-
-        DisplayText := CreateDisplayText('Due Date', Format(Record1."Due Date"), Format(Record2."Due Date"));
-        Message(DisplayText);
-
-        DisplayText := CreateDisplayText('Lead-Time Offset', Format(Record1."Lead-Time Offset"), Format(Record2."Lead-Time Offset"));
-        Message(DisplayText);
-
-        DisplayText := CreateDisplayText('Shortcut Dimension 1 Code', Record1."Shortcut Dimension 1 Code", Record2."Shortcut Dimension 1 Code");
-        Message(DisplayText);
-
-        DisplayText := CreateDisplayText('Shortcut Dimension 2 Code', Record1."Shortcut Dimension 2 Code", Record2."Shortcut Dimension 2 Code");
-        Message(DisplayText);
-
-        DisplayText := CreateDisplayText('Bin Code', Record1."Bin Code", Record2."Bin Code");
-        Message(DisplayText);
-
-        DisplayText := CreateDisplayText('Inventory Posting Group', Record1."Inventory Posting Group", Record2."Inventory Posting Group");
-        Message(DisplayText);
-
-        DisplayText := CreateDisplayText('Unit Cost', Format(Record1."Unit Cost"), Format(Record2."Unit Cost"));
-        Message(DisplayText);
-
-        DisplayText := CreateDisplayText('Cost Amount', Format(Record1."Cost Amount"), Format(Record2."Cost Amount"));
-        Message(DisplayText);
-
-        DisplayText := CreateDisplayText('Qty. per Unit of Measure', Format(Record1."Qty. per Unit of Measure"), Format(Record2."Qty. per Unit of Measure"));
-        Message(DisplayText);
-
-        DisplayText := CreateDisplayText('Resource Usage Type', Format(Record1."Resource Usage Type"), Format(Record2."Resource Usage Type"));
-        Message(DisplayText);
-
-        DisplayText := CreateDisplayText('Appl.-to Item Entry', Format(Record1."Appl.-to Item Entry"), Format(Record2."Appl.-to Item Entry"));
-        Message(DisplayText);
-
-        DisplayText := CreateDisplayText('Appl.-from Item Entry', Format(Record1."Appl.-from Item Entry"), Format(Record2."Appl.-from Item Entry"));
-        Message(DisplayText);
-    end;
 
     local procedure CreateDisplayText(FieldName: Text; Value1: Text; Value2: Text): Text
     begin
@@ -378,19 +295,20 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
     var
         AssemblyHeader: Record "Assembly Header";
         AssemblyLine: Record "Assembly Line";
-        AssemblyLineMgt: Codeunit "Assembly Line Management";
+        ALMgt: Codeunit "Assembly Line Management";
+        ahu: Codeunit "Assembly Header-Reserve";
     begin
         // Initialize or retrieve your AssemblyHeader record
         // ...
-    
+
         // Insert a new line for the Assembly Header
-        AssemblyLineMgt.InsertAsmLine(AssemblyHeader, AssemblyLine, false);
+        ALMgt.InsertAsmLine(AssemblyHeader, AssemblyLine, false);
 
         // Set the details of the new assembly line
         // AssemblyLine.Validate("No.", YourItemNo); // Replace YourItemNo with the actual item number
         // AssemblyLine.Validate(Quantity, YourQuantity); // Replace YourQuantity with the actual quantity
-                                                       // Set other fields as needed
-                                                       // ...
+        // Set other fields as needed
+        // ...
 
         // Insert the assembly line record into the database
         AssemblyLine.Insert();
@@ -399,8 +317,10 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
     procedure updateAssemblyInfo()
     var
         aRec: Record "Option Assembly Line";
+        hRec, head : Record "Assembly Header";
         lRec: Record OptionLine;
         dRec, c, dRec2 : Record "Assembly Line";
+        ALMgt: Codeunit "Assembly Line Management";
         iRec: Record Item;
         bStr: Text[1];
         iNo: Code[20];
@@ -409,6 +329,24 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
         bStr := '';
         aRec.Reset();
         lRec.Reset();
+        head.Reset();
+        if head.get(rec."Document Type", rec."Document No.") then begin
+            hRec := head;
+        end else begin
+            hRec.Init(); // Initialize the Assembly Header record
+            hRec."Document Type" := rec."Document Type"; // Set the document type, e.g., to Order
+            hRec."No." := rec."Document No."; // Map the Sales Line Document No. to the Assembly Header No.
+            hRec.Description := rec.Description; // Transfer the description
+            hRec."Item No." := rec."No."; // Map the Item No. from Sales Line to Assembly Header
+            hRec."Variant Code" := rec."Variant Code"; // Transfer the Variant Code
+            hRec."Location Code" := rec."Location Code"; // Transfer the Location Code
+            hRec.Quantity := rec.Quantity; // Transfer the Quantity
+            hRec."Unit of Measure Code" := rec."Unit of Measure Code"; // Transfer the Unit of Measure
+            hRec."Due Date" := rec."Shipment Date"; // Map Shipment Date to Due Date
+            hRec."Shortcut Dimension 1 Code" := rec."Shortcut Dimension 1 Code"; // Transfer Shortcut Dimension 1
+            hRec."Shortcut Dimension 2 Code" := rec."Shortcut Dimension 2 Code"; // Transfer Shortcut Dimension 2
+            hRec.Insert();
+        end;
         lRec.SetFilter(docID, rec."Document No.");
         lRec.SetRange(line, rec."Line No.");
         if lRec.FindSet() then begin
@@ -419,13 +357,10 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
                     aRec.SetFilter(Designator, lRec.preSelection);
                     if aRec.FindSet() then begin
                         repeat
-                            Message('activated for %1', aRec.Designator);
                             dRec.Reset();
-                            dRec.init();
+
+                            ALMgt.InsertAsmLine(hRec, dRec, false);
                             dRec.Type := dRec.Type::Item;
-                            dRec."Document Type" := rec."Document Type"::Quote;
-                            dRec."Document No." := rec."Document No.";
-                            dRec."Line No." := rec."Line No.";
                             dRec."No." := aRec.No;
                             dRec.Description := aRec.Description;
                             dRec."Unit of Measure Code" := aRec.UOM;
@@ -435,13 +370,14 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
                                 dRec."Cost Amount" := iRec."Unit Cost" * dRec.Quantity;
                                 iNo := iRec."No.";
                             end;
-                            if dRec.Insert() then begin
-                                d := dRec;
+                            dRec.Modify(true);
+                        // if dRec.Insert() then begin
+                        //     d := dRec;
 
 
-                            end else begin
-                                Message('Failed');
-                            end;
+                        // end else begin
+                        //     Message('Failed');
+                        // end;
                         until aRec.Next() = 0;
                     end;
                 end;
@@ -453,11 +389,8 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
                         repeat
                             Message('activated for %1', aRec.Designator);
                             dRec.Reset();
-                            dRec.init();
+                            ALMgt.InsertAsmLine(hRec, dRec, false);
                             dRec.Type := dRec.Type::Item;
-                            dRec."Document Type" := rec."Document Type"::Quote;
-                            dRec."Document No." := rec."Document No.";
-                            dRec."Line No." := rec."Line No.";
                             dRec."No." := aRec.No;
                             dRec.Description := aRec.Description;
                             dRec."Unit of Measure Code" := aRec.UOM;
@@ -467,17 +400,17 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
                                 dRec."Cost Amount" := iRec."Unit Cost" * dRec.Quantity;
                                 iNo := iRec."No.";
                             end;
-
-                            if dRec.Insert() then begin
-                                d := dRec;
-                            end else begin
-                                Message('Failed');
-                            end;
+                            dRec.Modify(true);
+                        // if dRec.Insert() then begin
+                        //     d := dRec;
+                        // end else begin
+                        //     Message('Failed');
+                        // end;
 
                         until aRec.Next() = 0;
                     end;
                 end;
-                Message('%1', dRec);
+            // Message('%1', dRec);
             until lRec.Next() = 0;
         end;
 
