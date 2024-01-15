@@ -128,11 +128,11 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
                 // dR2.SetFilter("Document Type", Format(Rec."Document Type"));
                 // dR2.SetFilter("Document No.", Format(Rec."Document No."));
                 // dR2.SetFilter("Line No.", Format(Rec."Line No."));
-                if dR2.FindSet() then begin
-                    repeat
-                        Message('docNO: %1 /No: %2 /From: %3 /To: %4', dR2."Document No.", dR2."No.", dR2."Appl.-from Item Entry", dR2."Appl.-to Item Entry");
-                    until dR2.Next() = 0;
-                end;
+                // if dR2.FindSet() then begin
+                //     repeat
+                //         Message('docNO: %1 /No: %2 /From: %3 /To: %4', dR2."Document No.", dR2."No.", dR2."Appl.-from Item Entry", dR2."Appl.-to Item Entry");
+                //     until dR2.Next() = 0;
+                // end;
 
 
                 updateAssemblyInfo();
@@ -155,15 +155,23 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
                     Caption = 'DO THE THING';
                     trigger OnAction()
                     var
-                        dR2: Record "Assembly Line";
+                        dR2: Record "Assembly Header";
+                        dR1: Record "Assembly Line";
                     begin
+
+                        if dR2.get(rec."Document Type", rec."Document No.") then begin
+                            Message('%1', dR2);
+                            dR1.Reset();
+                        end;
+                        dR2.Reset();
+
                         // dRec.SetFilter("Document No.", rec."Document No.");
                         // dRec.SetRange("Line No.", rec."Line No.");
 
                         if dR2.FindSet() then begin
                             repeat
-                                Message('docNO: %1 /No: %2 /From: %3 /To: %4', dR2."Document No.", dR2."No.");
-                                if CopyStr(dR2."Document No.", 1, 1) = 'S' then begin
+                                Message('%1', dR2);
+                                if CopyStr(dR2."No.", 1, 1) = 'S' then begin
                                     dR2.Delete();
                                 end;
                             until dR2.Next() = 0;
@@ -319,33 +327,77 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
         aRec: Record "Option Assembly Line";
         hRec, head : Record "Assembly Header";
         lRec: Record OptionLine;
+        shRec: Record "Sales Header";
         dRec, c, dRec2 : Record "Assembly Line";
         ALMgt: Codeunit "Assembly Line Management";
         iRec: Record Item;
         bStr: Text[1];
         iNo: Code[20];
+        atoRec: Record "Assemble-to-Order Link";
         p: Page "Assemble-to-Order Lines";
     begin
         bStr := '';
         aRec.Reset();
         lRec.Reset();
         head.Reset();
-        if head.get(rec."Document Type", rec."Document No.") then begin
-            hRec := head;
+        atoRec.SetFilter("Document No.", rec."Document No.");
+        atoRec.SetRange("Document Line No.", rec."Line No.");
+        if atoRec.FindFirst() then begin
+            if head.get(atoRec."Assembly Document Type", atoRec."Assembly Document No.") then begin
+
+                hRec := head;
+            end else begin
+
+                // Initialize the Assembly Header record
+                hRec."Document Type" := rec."Document Type"; // Set the document type, e.g., to Order
+                hRec.Init();
+                if head.FindLast() then begin
+                    hRec."No." := IncrementID(head."No.");
+                end else begin
+                    hrec."No." := 'A00001';
+                end;
+
+                // hRec."No." := rec."Document No.";
+                hRec.Description := rec.Description; // Transfer the description
+                hRec."Item No." := rec."No."; // Map the Item No. from Sales Line to Assembly Header
+                hRec."Variant Code" := rec."Variant Code"; // Transfer the Variant Code
+                hRec."Location Code" := rec."Location Code"; // Transfer the Location Code
+                hRec.Quantity := rec.Quantity; // Transfer the Quantity
+                hRec."Unit of Measure Code" := rec."Unit of Measure Code"; // Transfer the Unit of Measure
+                hRec."Due Date" := rec."Shipment Date"; // Map Shipment Date to Due Date
+                hRec."Shortcut Dimension 1 Code" := rec."Shortcut Dimension 1 Code"; // Transfer Shortcut Dimension 1
+                hRec."Shortcut Dimension 2 Code" := rec."Shortcut Dimension 2 Code"; // Transfer Shortcut Dimension 2
+                hRec.Insert();
+            end;
         end else begin
-            hRec.Init(); // Initialize the Assembly Header record
+            atoRec.Init();
+            atoRec."Document No." := rec."Document No.";
+            atoRec."Document Type" := rec."Document Type";
+            atoRec."Document Line No." := atoRec."Document Line No.";
             hRec."Document Type" := rec."Document Type"; // Set the document type, e.g., to Order
-            hRec."No." := rec."Document No."; // Map the Sales Line Document No. to the Assembly Header No.
+            hRec.Init();
+            if head.FindLast() then begin
+                hRec."No." := IncrementID(head."No.");
+            end else begin
+                hrec."No." := 'A00001';
+            end;
+
+            // hRec."No." := rec."Document No.";
             hRec.Description := rec.Description; // Transfer the description
             hRec."Item No." := rec."No."; // Map the Item No. from Sales Line to Assembly Header
             hRec."Variant Code" := rec."Variant Code"; // Transfer the Variant Code
             hRec."Location Code" := rec."Location Code"; // Transfer the Location Code
-            hRec.Quantity := rec.Quantity; // Transfer the Quantity
+            hRec.Quantity := rec."Qty. to Asm. to Order (Base)"; // Transfer the Quantity
             hRec."Unit of Measure Code" := rec."Unit of Measure Code"; // Transfer the Unit of Measure
             hRec."Due Date" := rec."Shipment Date"; // Map Shipment Date to Due Date
             hRec."Shortcut Dimension 1 Code" := rec."Shortcut Dimension 1 Code"; // Transfer Shortcut Dimension 1
             hRec."Shortcut Dimension 2 Code" := rec."Shortcut Dimension 2 Code"; // Transfer Shortcut Dimension 2
-            hRec.Insert();
+            atoRec."Assembly Document No." := hRec."No.";
+            atoRec."Assembly Document Type" := hRec."Document Type";
+            atoRec."Assembled Quantity" := rec."Qty. to Assemble to Order";
+            // hRec.Insert();
+            atoRec.InsertAsmHeader(hRec, rec."Document Type", hRec."No.");
+            atoRec.Insert();
         end;
         lRec.SetFilter(docID, rec."Document No.");
         lRec.SetRange(line, rec."Line No.");
@@ -416,6 +468,21 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
 
     end;
 
+    procedure IncrementID(currentID: Code[20]) ResultID: Code[20]
+    var
+        LetterPart: Text[1];
+        NumberPart: Integer;
+    begin
+        // Extract the letter and number parts
+        LetterPart := CopyStr(currentID, 1, 1);
+        Evaluate(NumberPart, CopyStr(currentID, 2, 5));
+
+        // Increment the number part
+        NumberPart := NumberPart + 1;
+
+        // Format the number part back to a string with leading zeros
+        ResultID := LetterPart + Format(NumberPart, 0, '<FiveDigits>');
+    end;
 
 
     procedure getPNwOpts()
