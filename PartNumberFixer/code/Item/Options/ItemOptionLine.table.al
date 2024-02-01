@@ -28,7 +28,15 @@ table 50102 "Item Option Line"
         {
             DataClassification = ToBeClassified;
         }
-
+        field(9; "Qty"; Integer)
+        {
+            DataClassification = ToBeClassified;
+        }
+        field(10; UOM; Code[20])
+        {
+            DataClassification = ToBeClassified;
+            TableRelation = "Unit of Measure".Code;
+        }
         field(3; Required; Boolean)
         {
             DataClassification = ToBeClassified;

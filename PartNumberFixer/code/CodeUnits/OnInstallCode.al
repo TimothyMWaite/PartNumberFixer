@@ -165,10 +165,24 @@ codeunit 50103 "My Install Codeunit"
         aRec.No := '110-POWER-SUPPLY';
         aRec.Description := '110 TRANSFORMERS WITH SMALLER & LIGHTER PLUGIN';
         aRec."Line No." := 0001;
-        aRec.Qty := 1;
         aRec.Designator := '/5/110';
         aRec.Insert();
-
+        osRec.Init();
+        osRec."Suffix Designator" := '/5/220';
+        osRec.Line := 0001;
+        osRec.OptionID := 1001;
+        osRec."Suffix Order" := 200;
+        osRec.AssemblyChange := 1000;
+        osRec.Insert();
+        addSPlist(spRec, osRec, oRec."Suffix Order");
+        aRec.Init();
+        aRec.ID := 1001;
+        aRec."Option ID" := 1000;
+        aRec.No := '220-POWERSUPPLY-24V';
+        aRec.Description := 'AC/DC WALL MOUNT ADAPTER 24V 15W 220V';
+        aRec."Line No." := 0001;
+        aRec.Designator := '/5/220';
+        aRec.Insert();
         ioRec.Init();
         ioRec.lID := 1000;
         ioRec."Line No." := 0001;

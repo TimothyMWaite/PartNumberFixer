@@ -67,6 +67,11 @@ table 50135 OptionLine
             TableRelation = "Option Suffix".AssemblyChange where(OptionID = field(oID), "Suffix Designator" = field(sufSelection));
 
         }
+        field(15; priceCh; Decimal)
+        {
+            DataClassification = ToBeClassified;
+            TableRelation = "Item Option Line"."Price Change" where(OptionID = field(oID));
+        }
     }
 
     keys

@@ -163,6 +163,7 @@ page 50136 OptionLineList
     procedure updatePN()
     var
         lRec, ol, li : Record OptionLine;
+        ioRec: Record "Item Option Line";
     begin
         if slRec."Line No." <> 0 then begin
 
@@ -175,7 +176,6 @@ page 50136 OptionLineList
             lRec.SetRange(iID, rec.iID);
             lRec.SetRange(line, rec.line);
             lRec.SetCurrentKey(preOrder, sufOrder);
-
             lRec.SetAscending(preOrder, true);
             lRec.SetAscending(sufOrder, true);
             if lRec.FindSet() then begin

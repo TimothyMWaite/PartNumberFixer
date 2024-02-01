@@ -38,6 +38,7 @@ page 50115 "Option SubList"
                     TableRelation = Option.Name;
                     Lookup = true;
                     DrillDown = true;
+                    ShowMandatory = true;
                     DrillDownPageId = "Option SubList";
 
                     trigger OnDrillDown()
@@ -65,7 +66,24 @@ page 50115 "Option SubList"
                             updateOptionVals(oRec);
                     end;
                 }
+                field(Qty; Rec.Qty)
+                {
+                    Caption = 'Quantity Per Unit';
+                    ApplicationArea = All;
+                    Enabled = rec.OptionName <> '';
+                    NotBlank = true;
+                    BlankZero = false;
+                    ShowMandatory = rec.OptionName <> '';
 
+                }
+                field(UOM; Rec.UOM)
+                {
+                    ApplicationArea = All;
+                    Enabled = rec.OptionName <> '';
+                    NotBlank = true;
+                    ShowMandatory = rec.OptionName <> '';
+
+                }
                 field(Caption; rec.Caption)
                 {
                     ApplicationArea = All;
@@ -266,6 +284,7 @@ page 50115 "Option SubList"
 
     end;
 
+
     trigger OnNewRecord(bxrec: Boolean)
     var
     begin
@@ -273,6 +292,8 @@ page 50115 "Option SubList"
         // m('newRec');
         // m('newXRec', true);
     end;
+
+
 
     var
         iRec: Record Item;

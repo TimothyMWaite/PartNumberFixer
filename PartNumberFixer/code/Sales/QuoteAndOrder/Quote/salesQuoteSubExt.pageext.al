@@ -1,5 +1,6 @@
 pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
 {
+    //TODO: Update captions, test more assembly option items, Add comments
     layout
     {
         addbefore("Type")
@@ -255,6 +256,7 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
         lRec, ol, fpg : Record OptionLine;
         sRec: Record SPList;
         iRec: Record Item;
+        p: Decimal;
         ioRec: Record "Item Option Line";
         slRec: Record "Sales Line";
         opPage: Page OptionLineList;
@@ -277,6 +279,7 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
                     lRec.iID := ioRec."ItemNo.";
                     lRec.oID := ioRec.OptionID;
                     lRec.pre := ioRec.pre;
+                    lRec.priceCh := ioRec."Price Change";
                     lRec.oName := ioRec.OptionName;
                     lRec.pn := rec.PartNo;
                     lRec.line := rec."Line No.";
@@ -300,6 +303,34 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
             // Clear(opPage);
         end;
 
+        // rec.validate("Unit Price");
+        p := getNewUnitCost();
+        rec.UpdateUnitPrice(p);
+    end;
+
+    procedure getNewUnitCost(): Decimal
+    var
+        oRec: Record "OptionLine";
+        pr: Decimal;
+        pag: Page "Sales Quote Subform";
+    begin
+        pr := 0;
+        pr := pr + rec."Unit Price";
+        Message('1: %1', rec."Unit Price");
+        oRec.Reset();
+        oRec.SetFilter(iID, rec."No.");
+        oRec.SetFilter(docID, rec."Document No.");
+        oRec.SetRange(line, rec."Line No.");
+        if oRec.FindSet() then begin
+            repeat
+                if (oRec.preSelection <> '') OR (oRec.sufSelection <> '') then begin
+                    pr += oRec.priceCh;
+                    Message('%1', oRec.priceCh);
+                end;
+            until oRec.Next() = 0;
+        end;
+
+        exit(pr);
     end;
 
     procedure addAssLine()
@@ -330,6 +361,7 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
         aRec: Record "Option Assembly Line";
         hRec, head : Record "Assembly Header";
         lRec: Record OptionLine;
+        ioRec: Record "Item Option Line";
         shRec: Record "Sales Header";
         dRec, c, dRec2 : Record "Assembly Line";
         ALMgt: Codeunit "Assembly Line Management";
@@ -338,6 +370,7 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
         iRec: Record Item;
         atoRec: Record "Assemble-to-Order Link";
         p: Page "Assemble-to-Order Lines";
+        am: Codeunit AssemblyManagement;
     begin
         bStr := '';
         aRec.Reset();
@@ -353,52 +386,16 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
             end else begin
 
                 // Initialize the Assembly Header record
-                hRec."Document Type" := rec."Document Type"; // Set the document type, e.g., to Order
                 hRec.Init();
-                if head.FindLast() then begin
-                    hRec."No." := IncrementID(head."No.");
-                end else begin
-                    hrec."No." := 'A00001';
-                end;
-
-                // hRec."No." := rec."Document No.";
-                hRec.Description := rec.Description; // Transfer the description
-                hRec."Item No." := rec."No."; // Map the Item No. from Sales Line to Assembly Header
-                hRec."Variant Code" := rec."Variant Code"; // Transfer the Variant Code
-                hRec."Location Code" := rec."Location Code"; // Transfer the Location Code
-                hRec.Quantity := rec.Quantity; // Transfer the Quantity
-                hRec."Unit of Measure Code" := rec."Unit of Measure Code"; // Transfer the Unit of Measure
-                hRec."Due Date" := rec."Shipment Date"; // Map Shipment Date to Due Date
-                hRec."Shortcut Dimension 1 Code" := rec."Shortcut Dimension 1 Code"; // Transfer Shortcut Dimension 1
-                hRec."Shortcut Dimension 2 Code" := rec."Shortcut Dimension 2 Code"; // Transfer Shortcut Dimension 2
-                hRec.Insert();
+                hRec := am.setAssemblyHeaderValues(hRec, rec);
+                atoRec.InsertAsmHeader(hRec, rec."Document Type", hRec."No.");
+                // hRec.Insert();
             end;
         end else begin
             atoRec.Init();
-            atoRec."Document No." := rec."Document No.";
-            atoRec."Document Type" := rec."Document Type";
-            atoRec."Document Line No." := atoRec."Document Line No.";
-            hRec."Document Type" := rec."Document Type"; // Set the document type, e.g., to Order
             hRec.Init();
-            if head.FindLast() then begin
-                hRec."No." := IncrementID(head."No.");
-            end else begin
-                hrec."No." := 'A00001';
-            end;
-
-            // hRec."No." := rec."Document No.";
-            hRec.Description := rec.Description; // Transfer the description
-            hRec."Item No." := rec."No."; // Map the Item No. from Sales Line to Assembly Header
-            hRec."Variant Code" := rec."Variant Code"; // Transfer the Variant Code
-            hRec."Location Code" := rec."Location Code"; // Transfer the Location Code
-            hRec.Quantity := rec."Qty. to Asm. to Order (Base)"; // Transfer the Quantity
-            hRec."Unit of Measure Code" := rec."Unit of Measure Code"; // Transfer the Unit of Measure
-            hRec."Due Date" := rec."Shipment Date"; // Map Shipment Date to Due Date
-            hRec."Shortcut Dimension 1 Code" := rec."Shortcut Dimension 1 Code"; // Transfer Shortcut Dimension 1
-            hRec."Shortcut Dimension 2 Code" := rec."Shortcut Dimension 2 Code"; // Transfer Shortcut Dimension 2
-            atoRec."Assembly Document No." := hRec."No.";
-            atoRec."Assembly Document Type" := hRec."Document Type";
-            atoRec."Assembled Quantity" := rec."Qty. to Assemble to Order";
+            hRec := am.setAssemblyHeaderValues(hRec, rec);
+            atoRec := am.setAtoValues(atoRec, rec, hRec);
             // hRec.Insert();
             atoRec.InsertAsmHeader(hRec, rec."Document Type", hRec."No.");
             atoRec.Insert();
@@ -407,157 +404,13 @@ pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
         lRec.SetRange(line, rec."Line No.");
         if lRec.FindSet() then begin
             repeat
-                if lRec.preSelection <> '' then begin
-                    aRec.Reset();
-                    aRec.SetRange("Option ID", lRec.oID);
-                    aRec.SetFilter(Designator, lRec.preSelection);
-                    if aRec.FindSet() then begin
-                        repeat
-                            dRec.Reset();
-
-
-
-                            // Assuming hRec (Assembly Header), dRec (Assembly Line), and other variables are defined and accessible
-
-                            // Insert the assembly line record
-                            ALMgt.InsertAsmLine(hRec, dRec, false);
-                            dRec.Type := dRec.Type::Item;
-                            dRec."No." := aRec.No; // Adjusted to use 'rec' directly
-                            dRec.Description := rec.Description;
-                            dRec."Unit of Measure Code" := rec."Unit of Measure Code";
-                            dRec."Quantity per" := aRec.Qty;
-                            dRec."Quantity" := aRec.Qty * rec."Qty. to Asm. to Order (Base)";
-
-                            // Additional fields from Item Record (iRec), assuming iRec is defined and accessible
-                            if iRec.Get(rec."No.") then begin
-                                dRec."Cost Amount" := dRec.CalcCostAmount(dRec.Quantity, iRec."Unit Cost");
-                                dRec."Unit Cost" := iRec."Unit Cost";
-                                dRec."Location Code" := rec."Location Code";
-                                // dRec.CheckBin(); // This would need to be adjusted if CheckBin requires context or parameters
-                                dRec."Inventory Posting Group" := iRec."Inventory Posting Group";
-                                dRec."Gen. Prod. Posting Group" := iRec."Gen. Prod. Posting Group";
-                                // Add more fields as available in iRec
-                            end;
-
-                            // Populate additional fields from Assembly Header Record (hRec) and Assemble-To-Order Link record (atoRec)
-                            dRec."Variant Code" := hRec."Variant Code";
-
-                            // Perform checks and validations
-                            // dRec.SetItemFilter(iRec); // Assuming this sets a filter for item validations
-                            // dRec.TestStatusOpen(); // Ensure the assembly line is open for modifications
-                            // dRec."Qty. per Unit of Measure" := 1;
-                            // dRec."Qty. Picked" := 2;
-                            // dRec."Qty. Picked (Base)" := 3;
-                            // dRec."Quantity to Consume" := 4;
-                            // dRec."Quantity (Base)" := 5;
-                            // dRec.Quantity := 6;
-                            // dRec."Quantity to Consume" := 7;
-                            // dRec."Quantity to Consume (Base)" := 8;
-                            // dRec."Consumed Quantity" := 9;
-                            // dRec."Consumed Quantity (Base)" := 10;
-                            // Update the record
-                            if dRec.Quantity > iRec.Inventory then begin
-                                dRec."Avail. Warning" := true;
-                            end else
-                                dRec."Avail. Warning" := false;
-                            dRec.Validate(Quantity);
-                            dRec.Modify(true);
-
-
-                            ALMgt.UpdateWarningOnLines(hRec);
-
-                        // if dRec.Insert() then begin
-                        //     d := dRec;
-
-
-                        // end else begin
-                        //     Message('Failed');
-                        // end;
-                        until aRec.Next() = 0;
-                    end;
-                end;
-                if lRec.sufSelection <> '' then begin
-                    aRec.Reset();
-                    aRec.SetRange("Option ID", lRec.oID);
-                    aRec.SetFilter(Designator, lRec.sufSelection);
-                    if aRec.FindSet() then begin
-                        repeat
-
-                            // Insert the assembly line record
-                            ALMgt.InsertAsmLine(hRec, dRec, false);
-                            dRec.Type := dRec.Type::Item;
-                            dRec."No." := aRec.No; // Adjusted to use 'rec' directly
-                            dRec.Description := rec.Description;
-                            dRec."Unit of Measure Code" := rec."Unit of Measure Code";
-                            dRec."Quantity per" := aRec.Qty;
-                            dRec."Quantity" := aRec.Qty * rec."Qty. to Asm. to Order (Base)";
-                            dRec."Due Date" := rec."Shipment Date";
-
-
-                            // Additional fields from Item Record (iRec), assuming iRec is defined and accessible
-                            if iRec.Get(rec."No.") then begin
-                                dRec."Cost Amount" := dRec.CalcCostAmount(dRec.Quantity, iRec."Unit Cost");
-                                dRec."Unit Cost" := iRec."Unit Cost";
-                                dRec."Location Code" := rec."Location Code";
-                                // dRec.CheckBin(); // This would need to be adjusted if CheckBin requires context or parameters
-                                dRec."Inventory Posting Group" := iRec."Inventory Posting Group";
-                                dRec."Gen. Prod. Posting Group" := iRec."Gen. Prod. Posting Group";
-                                // Add more fields as available in iRec
-                            end;
-                            dRec."Cost Amount" := dRec.Quantity * dRec."Unit Cost";
-                            // Populate additional fields from Assembly Header Record (hRec) and Assemble-To-Order Link record (atoRec)
-                            dRec."Variant Code" := hRec."Variant Code";
-
-                            // Perform checks and validations
-                            // dRec.SetItemFilter(iRec); // Assuming this sets a filter for item validations
-                            // dRec.TestStatusOpen(); // Ensure the assembly line is open for modifications
-
-                            // Update the record
-                            dRec.UpdateAvailWarning();
-                            // dRec."Qty. per Unit of Measure" := 1;
-                            // dRec."Qty. Picked" := 2;
-                            // dRec."Qty. Picked (Base)" := 3;
-                            // dRec."Quantity to Consume" := 4;
-                            // dRec."Quantity (Base)" := 5;
-                            // dRec.Quantity := 6;
-                            // dRec."Quantity to Consume" := 7;
-                            // dRec."Quantity to Consume (Base)" := 8;
-                            // dRec."Consumed Quantity" := 9;
-                            // dRec."Consumed Quantity (Base)" := 10;
-
-                            dRec.Validate(Quantity);
-                            dRec.Modify(true);
-
-                        // if dRec.Insert() then begin
-                        //     d := dRec;
-                        // end else begin
-                        //     Message('Failed');
-                        // end;
-
-                        until aRec.Next() = 0;
-                    end;
-                end;
+                am.checkOptionRecs(lRec, aRec, dRec, hRec, rec);
 
             until lRec.Next() = 0;
         end;
 
     end;
 
-    procedure IncrementID(currentID: Code[20]) ResultID: Code[20]
-    var
-        LetterPart: Text[1];
-        NumberPart: Integer;
-    begin
-        // Extract the letter and number parts
-        LetterPart := CopyStr(currentID, 1, 1);
-        Evaluate(NumberPart, CopyStr(currentID, 2, 5));
-
-        // Increment the number part
-        NumberPart := NumberPart + 1;
-
-        // Format the number part back to a string with leading zeros
-        ResultID := LetterPart + Format(NumberPart, 0, '<FiveDigits>');
-    end;
 
 
     procedure getPNwOpts()

@@ -25,20 +25,6 @@ table 50121 "Option Assembly Line"
         {
             DataClassification = ToBeClassified;
         }
-        field(5; UOM; Code[20])
-        {
-            DataClassification = ToBeClassified;
-
-        }
-        field(6; Qty; Integer)
-        {
-            DataClassification = ToBeClassified;
-
-        }
-        field(7; perConnector; Boolean)
-        {
-            DataClassification = ToBeClassified;
-        }
         field(8; Designator; Text[20])
         {
             DataClassification = ToBeClassified;

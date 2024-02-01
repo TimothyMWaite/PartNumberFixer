@@ -62,22 +62,7 @@ page 50121 "Option Assembly List"
                     end;
 
                 }
-                field(UOM; rec.UOM)
-                {
-                    ApplicationArea = All;
-                    ToolTip = 'Specifies the UOM.';
-                }
-                field(Qty; rec.Qty)
-                {
-                    ApplicationArea = All;
-                    ToolTip = 'Specifies the Quantity.';
-                }
-                field(perConnector; rec.perConnector)
-                {
-                    ApplicationArea = All;
-                    Caption = 'Qty Based On Connectors?';
-                    ToolTip = 'Specifies if per Connector.';
-                }
+
                 field(replacePart;Rec.replacePart)
                 {
                     Caption = 'Replace a Part?';
