@@ -4,7 +4,7 @@ table 50101 "Intermediary Part Table"
 
     fields
     {
-        field(1; "PartNo"; Text[100])
+        field(1; "PartNumber"; Text[100])
         {
             DataClassification = ToBeClassified;
         }
@@ -23,7 +23,7 @@ table 50101 "Intermediary Part Table"
 
     keys
     {
-        key(PK; PartNo)
+        key(PK; PartNumber)
         {
             Clustered = true;
         }

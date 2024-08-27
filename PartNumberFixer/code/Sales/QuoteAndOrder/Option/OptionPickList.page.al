@@ -1,222 +1,297 @@
 page 50136 OptionLineList
 {
-    PageType = List;
+    PageType = ListPart;
     ApplicationArea = All;
     SourceTable = OptionLine;
+
     layout
     {
         area(Content)
         {
-            field("Part Number"; fPN)
-            {
-                ApplicationArea = all;
-                Editable = false;
-                Caption = 'Current Part Number:';
-
-            }
             repeater("Options")
             {
-                field(line; Rec.line)
+                field(LineNumber; Rec.LineNumber)
                 {
                     ApplicationArea = All;
-                    Editable = false;
-
+                    Visible = true;
+                    TableRelation = "Sales Line"."Line No.";
                 }
-                field(Id; rec.Id)
-                {
-                    ApplicationArea = All;
-                    Visible = false;
-
-                }
-                field(SalesHeadID; rec.docID)
+                field(Id; Rec.Id)
                 {
                     ApplicationArea = All;
                     Visible = true;
                 }
-                field(optionId; rec.oID)
+                field(DocumentNumber; Rec.DocumentID)
                 {
                     ApplicationArea = All;
-
-                    Visible = false;
+                    Visible = true;
+                    TableRelation = "Sales Line"."Document No.";
                 }
-                field(OptionName; rec.oName)
+                field(OptionID; Rec.OptionID)
                 {
                     ApplicationArea = All;
+                    Visible = true;
+                    TableRelation = Option.Id where(Name = field(OptionName));
+                }
+                field(OptionName; Rec.OptionName)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Option';
+                    TableRelation = Option.Name where("Item Type" = field(ItemType));
+                    DrillDownPageId = OptionList;
+                    DrillDown = true;
+                    LookupPageId = OptionList;
+                    Lookup = true;
+
+                    trigger OnValidate()
+                    var
+                        OptionRecord: Record Option;
+                    begin
+                        if Rec.Id = 0 then begin
+                            Initialize();
+                            Rec.Insert(false);
+                        end;
+                        OptionRecord.SetFilter(Name, Rec.OptionName);
+                        if OptionRecord.FindFirst() then begin
+                            Rec.OptionID := OptionRecord.Id;
+                            Rec.Modify(false);
+                        end;
+                    end;
+                }
+
+                // Selection fields
+                field(StartSelection; Rec.PreSelection)
+                {
+                    ApplicationArea = All;
+                    Caption = 'Change at the start of the Part Number';
+                    ToolTip = 'Select as many changes to the start of the part number as needed. Keep in mind that for some of these you may also need to select one of the end of part number options. If they are not showing in the correct order, you can edit the option to fix this or talk to Tim.';
+                    TableRelation =
+                        if (OptionName = const('')) "Option Designators".Designator where(itemType = field(ItemType), AtFront = Const(true))
+                    else
+                    "Option Designators".Designator where(itemType = field(ItemType), OptionID = field(OptionID), AtFront = Const(true));
+                    LookupPageId = "Option Designators";
+
+                    trigger OnAfterLookup(Selected: RecordRef)
+                    begin
+                        UpdatePartNumber();
+                    end;
+
+                    trigger OnValidate()
+                    var
+                        OptionDesignatorRecord: Record "Option Designators";
+                        OptionRecord: Record Option;
+                    begin
+                        if Rec.Id = 0 then
+                            Initialize();
+
+                        // Get the designator and update relevant fields
+                        OptionDesignatorRecord := Rec.GetDesignator(true);
+                        if (Rec.OptionID <> OptionDesignatorRecord.OptionID) AND (OptionDesignatorRecord.OptionID <> 0) then begin
+                            Rec.OptionID := OptionDesignatorRecord.OptionID;
+                        end;
+                        Rec.PreID := OptionDesignatorRecord.Id;
+                        Rec.IsPreVariable := OptionDesignatorRecord.Variable;
+                        Rec.PrefixOrder := OptionDesignatorRecord.Order;
+                        Rec.PreCost := OptionDesignatorRecord.PriceChange;
+
+                        if OptionRecord.Get(OptionDesignatorRecord.OptionID) then
+                            Rec.OptionName := OptionRecord.Name;
+
+                        if Rec.Modify(false) then begin
+                            UpdatePartNumber();
+                            UpdatePricing();
+                        end else begin
+                            Error('Cannot edit option line. Please try again, and if it does not work, contact Tim.');
+                        end;
+
+                        CurrPage.Update(true);
+                    end;
+                }
+
+                field(PartNumber; Rec.PartNumber)
+                {
+                    ApplicationArea = All;
+                    Enabled = Rec.OptionName <> '';
                     Editable = false;
-
+                    Caption = 'Part Number';
                 }
-                //selection fields
-                field("Start Selection"; rec.preSelection)
+
+                field(EndSelection; Rec.SuffixSelection)
                 {
                     ApplicationArea = All;
-                    TableRelation = SPList.Designator where(OptionID = field(oID), prefix = const(true));
-                    LookupPageId = SPList;
-                    Editable = rec.oName <> '';
+                    Caption = 'Change at the end of the Part Number';
+                    ToolTip = 'Select as many changes to the end of the part number as needed. If they are not showing in the correct order, you can edit the option to fix this or talk to Tim.';
+                    TableRelation = "Option Designators".Designator where(itemType = field(ItemType), OptionID = field(OptionID), AtFront = Const(false));
+                    LookupPageId = "Option Designators";
+
                     trigger OnAfterLookup(Selected: RecordRef)
                     begin
-                        updatePN();
+                        UpdatePartNumber();
                     end;
 
                     trigger OnValidate()
                     var
-
+                        OptionDesignatorRecord: Record "Option Designators";
+                        OptionRecord: Record Option;
                     begin
-                        updatePN();
-                        CurrPage.Update(false);
-                    end;
-                }
-                field("End Selection"; rec.sufSelection)
-                {
-                    ApplicationArea = All;
-                    TableRelation = SPList.Designator where(OptionID = field(oID), prefix = const(false));
-                    LookupPageId = SPList;
-                    Editable = rec.oName <> '';
-                    trigger OnAfterLookup(Selected: RecordRef)
-                    begin
-                        updatePN();
-                    end;
+                        if Rec.Id = 0 then
+                            Initialize();
 
-                    trigger OnValidate()
-                    var
+                        // Get the designator and update relevant fields
+                        OptionDesignatorRecord := Rec.GetDesignator(false);
+                        if (Rec.OptionID <> OptionDesignatorRecord.OptionID) AND (OptionDesignatorRecord.OptionID <> 0) then begin
+                            Rec.OptionID := OptionDesignatorRecord.OptionID;
+                            if OptionRecord.Get(OptionDesignatorRecord.OptionID) then
+                                Rec.OptionName := OptionRecord.Name;
+                        end;
+                        Rec.SuffixID := OptionDesignatorRecord.Id;
+                        Rec.IsSuffixVariable := OptionDesignatorRecord.Variable;
+                        Rec.SuffixOrder := OptionDesignatorRecord.Order;
+                        Rec.SuffixCost := OptionDesignatorRecord.PriceChange;
 
-                    begin
-                        updatePN();
-                        CurrPage.Update(false);
+                        if Rec.Modify(false) then begin
+                            UpdatePartNumber();
+                            UpdatePricing();
+                        end else begin
+                            Error('Cannot edit option line. Please try again, and if it does not work, contact Tim.');
+                        end;
 
+                        CurrPage.Update(true);
                     end;
                 }
             }
         }
     }
+
     actions { }
-    trigger OnAfterGetCurrRecord()
+
+    trigger OnOpenPage()
     var
-        lRec: Record OptionLine;
+        OptionRecord: Record Option;
+        OptionLineRecord: Record OptionLine;
+        PartNumber: Text;
     begin
-        updatePN();
-        if lRec.Get(0) then begin
-            lRec.Delete();
-            CurrPage.Update(false);
+        OptionRecord.SetRange("Item Type", SalesLineRecord.GetItem()."Item Type");
+        if OptionRecord.FindSet() then begin
+            repeat
+                if OptionRecord.Required then begin
+                    OptionLineRecord.Reset();
+                    OptionLineRecord.SetFilter(DocumentID, SalesLineRecord."Document No.");
+                    OptionLineRecord.SetRange(OptionID, OptionRecord.Id);
+                    OptionLineRecord.SetRange(LineNumber, SalesLineRecord."Line No.");
+                    if not OptionLineRecord.FindFirst() then begin
+                        OptionLineRecord.Init();
+                        OptionLineRecord.Id := OptionLineRecord.GetNewID();
+                        OptionLineRecord.DocumentID := SalesLineRecord."Document No.";
+                        OptionLineRecord.LineNumber := SalesLineRecord."Line No.";
+                        OptionLineRecord.OptionID := OptionRecord.Id;
+                        OptionLineRecord.PartNumber := SalesLineRecord.GetItem().PartNumber;
+                        OptionLineRecord.OptionName := OptionRecord.Name;
+                        OptionLineRecord.PreSelection := '';
+                        OptionLineRecord.SuffixSelection := '';
+                        OptionLineRecord.Insert(false);
+                    end;
+                end;
+            until OptionRecord.Next() = 0;
         end;
-    end;
 
-    trigger OnModifyRecord(): Boolean
-    begin
-        updatePN();
-
-
-    end;
-
-    trigger OnClosePage()
-    var
-        r: Record OptionLine;
-    begin
-        ClearAll();
-
+        OptionLineRecord.Reset();
+        OptionLineRecord.SetFilter(DocumentID, SalesLineRecord."Document No.");
+        OptionLineRecord.SetRange(LineNumber, SalesLineRecord."Line No.");
+        if OptionLineRecord.FindSet() then begin
+            CurrPage.SetRecord(OptionLineRecord);
+            PartNumber := SalesLineRecord.GetPartNumber();
+            repeat
+                if OptionLineRecord.PartNumber <> PartNumber then begin
+                    OptionLineRecord.PartNumber := PartNumber;
+                    OptionLineRecord.Modify(false);
+                end;
+            until OptionLineRecord.Next() = 0;
+        end else begin
+            Initialize();
+        end;
     end;
 
     trigger OnInsertRecord(BelowxRec: Boolean): Boolean
-    var
-        lRec: Record OptionLine;
     begin
-        Message('\Do not try to add options here. Go to the Item ' + '\page and add the needed options there! Or talk to Tim.');
-        if lRec.Get(0) then begin
-            lRec.Delete();
+        Initialize();
+    end;
+
+    procedure GetPartNumber(): Text[200]
+    begin
+        exit(Rec.PartNumber);
+    end;
+
+    procedure Initialize()
+    begin
+        Rec.Init();
+        Rec.Id := Rec.GetNewID();
+        Rec.DocumentID := SalesLineRecord."Document No.";
+        Rec.LineNumber := SalesLineRecord."Line No.";
+        Rec.Insert(false);
+        CurrPage.Update(false);
+    end;
+
+    procedure SetSalesLine(SalesLine: Record "Sales Line")
+    begin
+        SalesLineRecord := SalesLine;
+        ItemRecord := SalesLine.GetItem();
+        Rec.ItemType := ItemRecord."Item Type";
+    end;
+
+    procedure UpdatePartNumber()
+    var
+        OptionLineRecord: Record OptionLine;
+        OptionDesignatorRecord: Record "Option Designators";
+        SalesLineRecord: Record "Sales Line";
+        FinalPartNumber: Text[200];
+    begin
+        if SalesLineRecord."Line No." <> 0 then begin
+            FinalPartNumber := SalesLineRecord.GetPartNumber();
+            if Rec.OptionID <> 0 then
+                Rec.Modify(false);
+
+            OptionLineRecord.Reset();
+            OptionLineRecord.SetFilter(DocumentID, Rec.DocumentID);
+            OptionLineRecord.SetRange(LineNumber, Rec.LineNumber);
+            if OptionLineRecord.FindSet() then begin
+                repeat
+                    OptionLineRecord.PartNumber := FinalPartNumber;
+                    OptionLineRecord.Modify(false);
+                until OptionLineRecord.Next() = 0;
+            end;
+
+            SalesLineRecord.PartNumber := FinalPartNumber;
+            Rec.PartNumber := FinalPartNumber;
+
+            if not SalesLineRecord.Insert(false) then begin
+                SalesLineRecord.Modify(false);
+            end;
+
             CurrPage.Update(false);
         end;
-        exit(false);
     end;
 
-    procedure setSH(s: Record "Sales Order Entity Buffer")
-    begin
-        shRec := s;
-    end;
-
-    procedure setI(i: Record "Sales Line")
+    procedure UpdatePricing()
     var
-        item: Record Item;
+        OptionLineRecord: Record OptionLine;
     begin
-        if item.get(i."No.") then begin
-            iRec := item;
+        TotalCostIncrease := 0;
+        OptionLineRecord.Reset();
+        OptionLineRecord.SetFilter(DocumentID, Rec.DocumentID);
+        OptionLineRecord.SetRange(LineNumber, Rec.LineNumber);
+        if OptionLineRecord.FindSet() then begin
+            repeat
+                TotalCostIncrease += OptionLineRecord.PreCost + OptionLineRecord.SuffixCost;
+            until OptionLineRecord.Next() = 0;
         end;
-        slRec := i;
+        SalesLineRecord."Unit Price" := SalesLineRecord.GetItem()."Unit Price" + TotalCostIncrease;
+        SalesLineRecord.Modify(false);
     end;
-
-    procedure getPN(): Text[200]
-    begin
-        exit(fPN);
-    end;
-
-    procedure resetPN()
-    begin
-        fPN := iRec.PartNo;
-    end;
-
-    procedure setRecs(IOL: Record OptionLine; sl: Record "Sales Line")
-    var
-        olRec: Record OptionLine;
-    begin
-        rec := IOL;
-        rec.Next();
-    end;
-
-    procedure updatePN()
-    var
-        lRec, ol, li : Record OptionLine;
-        ioRec: Record "Item Option Line";
-    begin
-        if slRec."Line No." <> 0 then begin
-
-            p := '';
-            s := '';
-            rec.pn := iRec.PartNo;
-
-            lRec.Reset();
-            lRec.SetFilter(docId, rec.docID);
-            lRec.SetRange(iID, rec.iID);
-            lRec.SetRange(line, rec.line);
-            lRec.SetCurrentKey(preOrder, sufOrder);
-            lRec.SetAscending(preOrder, true);
-            lRec.SetAscending(sufOrder, true);
-            if lRec.FindSet() then begin
-                repeat
-                    if lRec.preSelection <> '' then
-                        p += lRec.preSelection;
-                    if lRec.sufSelection <> '' then
-                        s += lRec.sufSelection;
-                    lRec.Modify(false);
-                until lRec.Next() = 0;
-            end;
-            fPN := p + iRec.PartNo + s;
-            if rec.oID <> 0 then
-                rec.Modify(false);
-            li.Reset();
-            li.SetFilter(docID, rec.docID);
-            li.SetRange(line, rec.line);
-            if ol.FindSet() then begin
-                repeat
-                    if li.Id <> 0 then begin
-
-                        li.pn := fPN;
-                        li.Modify(false);
-                    end;
-                until li.Next() = 0;
-            end;
-            slRec.PartNo := fPN;
-
-            // Message('%1, %2', rec.sufassemblyID, rec.preassemblyID);
-        end;
-    end;
-
-
 
     var
-        iRec: Record Item;
-        p, s : text[50];
-        slRec: Record "Sales Line";
-        shRec: Record "Sales Order Entity Buffer";
-        spRec: Record SPList temporary;
-        fPN: Text[200];
-
-
+        ItemRecord: Record Item;
+        SalesLineRecord: Record "Sales Line";
+        TotalCostIncrease: Decimal;
+        FinalPartNumber: Text[200];
 }

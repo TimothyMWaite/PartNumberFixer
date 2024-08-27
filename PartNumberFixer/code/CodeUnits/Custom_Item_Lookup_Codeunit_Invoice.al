@@ -14,7 +14,7 @@ codeunit 50101 "Custom Item Lookup Invoice"
         ItemRec.SETFILTER(Blocked, 'false');
         Selected := PAGE.RunModal(PAGE::"Item List", ItemRec) = ACTION::LookupOK;
         if Selected then begin
-            ItemRec.SETRANGE(PartNo, ItemRec.PartNo);
+            ItemRec.SETRANGE(PartNumber, ItemRec.PartNumber);
             if ItemRec.FINDFIRST then begin
                 if IsNewRecord then begin
                     SalesLineRec.INIT;
@@ -55,7 +55,7 @@ codeunit 50101 "Custom Item Lookup Invoice"
                      //     SalesLineRec."Tax Group Code" := 'Nontaxable';
                      //     Message('else %1', SalesLineRec."Unit of Measure Code");
                      // end;
-                SalesLineRec.PartNo := ItemRec.PartNo;
+                SalesLineRec.PartNumber := ItemRec.PartNumber;
                 // Message('Endofall %1', SalesLineRec);
                 if IsNewRecord then
                     SalesLineRec.INSERT

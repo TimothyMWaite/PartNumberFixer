@@ -43,7 +43,7 @@ codeunit 50100 "Custom Item Lookup"
                 SalesLineRec."Unit of Measure Code" := ItemRec."Base Unit of Measure";
                 SalesLineRec."Unit Price" := ItemRec."Unit Price";
                 SalesLineRec."Tax Group Code" := ItemRec."Tax Group Code";
-                SalesLineRec.PartNo := PartsRec.PartNo;
+                SalesLineRec.PartNumber := PartsRec.PartNumber;
 
                 if IsNewRecord then
                     SalesLineRec.INSERT
@@ -61,20 +61,20 @@ codeunit 50100 "Custom Item Lookup"
 
     procedure SetPNInvoice(var SalesInvoiceLine: Record "Sales Invoice Line"): Boolean
     var
-        PartNo: Text[100];
+        PartNumber: Text[100];
 
     begin
-        // Check if PartNo is already set
-        if SalesInvoiceLine.PartNo <> '' then
+        // Check if PartNumber is already set
+        if SalesInvoiceLine.PartNumber <> '' then
             exit;
 
-        // Logic to fetch and set the PartNo, assuming you have a function GetPartNoByItem()
-        // that takes an Item ID and returns the corresponding PartNo
+        // Logic to fetch and set the PartNumber, assuming you have a function GetPartNoByItem()
+        // that takes an Item ID and returns the corresponding PartNumber
 
 
-        PartNo := GetPartNoByItem(SalesInvoiceLine."No.");
-        if PartNo <> '' then begin
-            SalesInvoiceLine.PartNo := PartNo;
+        PartNumber := GetPartNoByItem(SalesInvoiceLine."No.");
+        if PartNumber <> '' then begin
+            SalesInvoiceLine.PartNumber := PartNumber;
             // SalesInvoiceLine.Modify();
             exit(true);
         end else begin
@@ -83,7 +83,7 @@ codeunit 50100 "Custom Item Lookup"
         ;
     end;
 
-    // Dummy function to fetch PartNo by Item No., replace with your actual logic
+    // Dummy function to fetch PartNumber by Item No., replace with your actual logic
     local procedure GetPartNoByItem(ItemNo: Code[20]): Text[100]
     var
         IntermediaryPartTableRec: Record "Intermediary Part Table";
@@ -93,11 +93,11 @@ codeunit 50100 "Custom Item Lookup"
         // Option 1: Fetch from Intermediary Part Table using FindFirst
         IntermediaryPartTableRec.SetFilter("Item ID", ItemNo);
         if IntermediaryPartTableRec.FindFirst() then begin
-            result := IntermediaryPartTableRec.PartNo;
+            result := IntermediaryPartTableRec.PartNumber;
         end else begin
             // Option 2: Fetch from Item Table
             if ItemTableRec.Get(ItemNo) then begin
-                result := ItemTableRec.PartNo;
+                result := ItemTableRec.PartNumber;
             end else begin
                 result := '';  // or some default value or error handling
                 Error('Part Number could not be retrieved.  Make sure that the part number is included in the Item Card for item: %1.', ItemNo);

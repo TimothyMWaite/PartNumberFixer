@@ -11,7 +11,7 @@ page 50104 "Intermediary Part List"
         {
             repeater(Group)
             {
-                field("PartNo"; rec.PartNo)
+                field("PartNumber"; rec.PartNumber)
                 {
                     ApplicationArea = All;
                 }

@@ -2,17 +2,18 @@ pageextension 50125 AssemblyLine extends "Assembly BOM"
 {
     layout
     {
-        addbefore(Position)
+        addafter("No.")
         {
-            field("Item Catagory"; Rec.catagory)
+            field(PartType; rec.PartType)
             {
-                ApplicationArea = all;
-                Editable = false;
+                ApplicationArea = All;
+                Visible = True;
             }
-            field(ccID; Rec.ccID)
+            field(showOnDocument; rec.showOnDocument)
             {
-                ApplicationArea = all;
-                Visible = false;
+                ApplicationArea = All;
+                Caption = 'Show On Assembly Line in Sales Document';
+                TableRelation = Item.showOnDocument where("No." = field("No."));
             }
         }
         modify("No.")
@@ -22,8 +23,7 @@ pageextension 50125 AssemblyLine extends "Assembly BOM"
                 iRec: Record Item;
             begin
                 if iRec.get(rec."No.") then begin
-                    rec.catagory := iRec."Item Category Code";
-                    rec.ccID := iRec."Item Category ID";
+                    rec.PartType := iRec.PartType;
                 end;
             end;
         }

@@ -2,15 +2,48 @@ tableextension 50101 itemTableExt extends Item
 {
     fields
     {
-        field(10001; PartNo; Text[100])
+        field(10001; PartNumber; Text[100])
         {
             DataClassification = ToBeClassified;
 
         }
+        field(10002; ports; Integer)
+        {
+            DataClassification = ToBeClassified;
+            BlankZero = true;
+
+        }
+        field(10003; opts; Boolean)
+        {
+            DataClassification = ToBeClassified;
+        }
+        field(7; "Item Type"; Enum "ItemTypes")
+        {
+            DataClassification = ToBeClassified;
+            Caption = 'Item Type';
+
+        }
+        field(13; "PartType"; Enum "PartTypes")
+        {
+            DataClassification = ToBeClassified;
+            Caption = 'Part Type';
+        }
+        field(50122; showOnDocument; Boolean)
+        {
+            DataClassification = ToBeClassified;
+            Caption = 'Show On Assembly Line in Sales Document';
+        }
+        field(50123; nestedOpts; Boolean)
+        {
+            DataClassification = ToBeClassified;
+            Caption = 'Apply Options to Assembly Parts?';
+        }
     }
-    fieldgroups{
-        addlast(DropDown; PartNo){
-    
+    fieldgroups
+    {
+        addlast(DropDown; PartNumber)
+        {
+
         }
     }
     var
@@ -20,9 +53,9 @@ tableextension 50101 itemTableExt extends Item
     var
         IntermediaryPartRec: Record "Intermediary Part Table";
     begin
-        if not IntermediaryPartRec.Get("PartNo") then begin
+        if not IntermediaryPartRec.Get("PartNumber") then begin
             IntermediaryPartRec.Init();
-            IntermediaryPartRec."PartNo" := "PartNo";
+            IntermediaryPartRec."PartNumber" := "PartNumber";
             IntermediaryPartRec."Item ID" := "No.";
             IntermediaryPartRec."Item Description" := Description;
             IntermediaryPartRec.Insert();
@@ -31,7 +64,7 @@ tableextension 50101 itemTableExt extends Item
 
     trigger OnBeforeModify()
     begin
-        OldPartNo := PartNo;
+        OldPartNo := PartNumber;
     end;
 
     trigger OnAfterModify()
@@ -44,7 +77,7 @@ tableextension 50101 itemTableExt extends Item
             IntermediaryPartRec.Modify();
         end else begin
             IntermediaryPartRec.Init();
-            IntermediaryPartRec."PartNo" := "PartNo";
+            IntermediaryPartRec."PartNumber" := "PartNumber";
             IntermediaryPartRec."Item Description" := Description;
             IntermediaryPartRec."Item ID" := "No.";
             IntermediaryPartRec.Insert();

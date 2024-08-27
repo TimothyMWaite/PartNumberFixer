@@ -2,12 +2,12 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Microsoft cloud sandbox",
+      "name": "Microsoft Cloud Sandbox",
       "request": "launch",
       "type": "al",
       "environmentType": "Sandbox",
       "environmentName": "ProductionCopy",
-      "startupObjectId": 31,
+      "startupObjectId": 9300,
       "startupObjectType": "Page",
       "breakOnError": "All",
       "launchBrowser": true,

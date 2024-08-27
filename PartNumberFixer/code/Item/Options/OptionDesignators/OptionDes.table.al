@@ -1,85 +1,92 @@
-table 50112 "Option Suffix"
+table 50112 "Option Designators"
 {
     DataClassification = ToBeClassified;
 
     fields
     {
+        field(10; Id; Integer)
+        {
+            DataClassification = ToBeClassified;
+            AutoIncrement = false;
+        }
 
-        field(4; "Suffix Designator"; Text[10])
+        field(1; "Designator"; Text[10])
         {
             DataClassification = ToBeClassified;
         }
-        field(5; "Suffix Order"; Integer)
+        field(2; "Order"; Integer)
         {
             DataClassification = ToBeClassified;
         }
-        field(7; Line; Integer)
+        field(3; atFront; Boolean)
         {
             DataClassification = ToBeClassified;
-            AutoIncrement = true;
         }
-        field(9; OptionID; Integer)
+
+        field(5; OptionID; Integer)
         {
             DataClassification = ToBeClassified;
             TableRelation = Option.Id;
         }
-        field(10; show; Boolean)
+        field(6; show; Boolean)
         {
             DataClassification = ToBeClassified;
         }
-        field(11; AssemblyChange; Integer)
+        field(7; AssemblyID; Integer)
         {
             DataClassification = ToBeClassified;
         }
+        field(8; itemType; Enum ItemTypes)
+        {
+            DataClassification = ToBeClassified;
+            TableRelation = Option."Item Type" where(Id = field(OptionID));
+        }
+        field(9; PriceChange; Decimal)
+        {
+            DataClassification = ToBeClassified;
+        }
+        field(12; variable; Boolean)
+        {
+            DataClassification = ToBeClassified;
+        }
+
+        // field(10; AssemblyChange; Integer)
+        // {
+        //     DataClassification = ToBeClassified;
+        // }
     }
     keys
     {
-        key(PK; "Suffix Designator")
+        key(PK; Designator)
         {
             Clustered = true;
         }
-        key(SK; OptionID)
+        key(PK2; Id)
+        {
+
+        }
+        key(SK; OptionID, Order)
         {
 
         }
     }
-    trigger OnInsert()
+    trigger OnDelete()
     var
-        oRec: Record Option;
-        spl: Record SPList;
+        aRec: Record "Option Assembly Line";
     begin
-        spl.Reset();
-        spl.SetFilter(OptionID, Format(rec.OptionID));
-        spl.SetRange(Designator, rec."Suffix Designator");
-        if spl.FindFirst() then begin
-            if "Suffix Designator" <> '' then begin
-                // spl.ID := getNewID();
-                spl.Designator := "Suffix Designator";
-                if oRec.get(OptionID) then begin
-                    spl.Order := oRec."Suffix Order";
-
-                end;
-                spl.active := true;
-                spl.prefix := false;
-                spl.Modify();
-            end;
-        end else begin
-            spl.Init();
-            spl.ID := getNewID();
-            spl.Designator := "Suffix Designator";
-            if oRec.get(OptionID) then begin
-                spl.Order := oRec."Suffix Order";
-            end;
-            spl.active := true;
-            spl.prefix := false;
-            spl.Modify();
+        aRec.Reset();
+        aRec.SetFilter("Designator", Designator);
+        aRec.SetRange("Option ID", Id);
+        if aRec.FindSet() then begin
+            repeat
+                aRec.Delete();
+            until aRec.Next() = 0;
         end;
-
     end;
 
     procedure getNewID(): Integer
     var
-        spl: Record SPList;
+        spl: Record "Option Designators";
     begin
         if spl.FindLast() then begin
             exit(spl.ID + 1);

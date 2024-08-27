@@ -4,7 +4,7 @@ pageextension 50122 "Item Lookup Ext" extends "Item Lookup"
     {
         addbefore("No.")
         {
-            field(PartNo; Rec.PartNo)
+            field(PartNumber; Rec.PartNumber)
             {
                 ApplicationArea = all;
             }

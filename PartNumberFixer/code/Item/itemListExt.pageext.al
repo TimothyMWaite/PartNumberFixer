@@ -4,7 +4,7 @@ pageextension 50110 ItemListExt extends "Item List"
     {
         addBefore("Description")
         {
-            field(PartNo; Rec.PartNo)
+            field(PartNumber; Rec.PartNumber)
             {
                 ApplicationArea = All;
             }

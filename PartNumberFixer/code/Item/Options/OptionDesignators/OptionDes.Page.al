@@ -1,9 +1,9 @@
-page 50118 "Option Suffixs"
+page 50118 "Option Designators"
 {
     PageType = ListPart;
-    SourceTable = "Option Suffix";
+    SourceTable = "Option Designators";
     ApplicationArea = All;
-    ModifyAllowed = true;
+    UsageCategory = Lists;
     MultipleNewLines = false;
 
     layout
@@ -14,6 +14,8 @@ page 50118 "Option Suffixs"
             {
                 trigger openAddOptions()
                 var
+
+                    tempRec: Record "Option Designators";
                 begin
                     MyModalPage.SetTableView(TempRec);
                     if MyModalPage.RunModal = Action::OK then begin
@@ -23,85 +25,131 @@ page 50118 "Option Suffixs"
                 end;
 
             }
-            repeater("Suffix Designators")
+            repeater("Designators")
             {
-                field("Suffix Designator"; Rec."Suffix Designator")
+                field(ID; Rec.ID)
                 {
                     ApplicationArea = All;
-                    Caption = 'Change at end of PN';
+                    Lookup = true;
+                    Visible = false;
+                }
+                field("Designator"; Rec."Designator")
+                {
+                    ApplicationArea = All;
+                    Caption = 'Change to the Part Number';
+                    NotBlank = true;
+
+
                     trigger OnValidate()
                     var
-
+                        dRec: Record "Option Designators";
+                        o: Record Option;
                     begin
-                        rec.OptionID := optionRec.Id;
-                        addToList();
+                        if not drec.get(rec.Id) then begin
+                            rec.OptionID := optionRec.Id;
+                            rec.itemType := optionRec."Item Type";
+                            rec.Insert(false);
+                            CurrPage.CombinedControl.addControl();
+                            updateControl();
 
+                        end else begin
+
+                            rec.Modify(true);
+                            CurrPage.Update(false);
+
+                        end;
+
+                        // Message('%1', rec.Designator);
                     end;
-
                 }
-                field(AssemblyChange; Rec.AssemblyChange)
+                field(Order; Rec.Order)
                 {
                     ApplicationArea = All;
-                    Enabled = (Rec."Suffix Designator" <> '');
-                    TableRelation = "Option Assembly Line".ID;
-                    Lookup = false;
-                    DrillDown = true;
-                    DrillDownPageId = "Option Assembly List";
+                    Enabled = rec.Designator <> '';
 
-                    trigger OnDrillDown()
+                    Caption = 'Order';
+                    ToolTip = 'Order that the change to the part number will be added. The lower the number the closer to the base part number it will be.  You can simulate this via the Sample Part Number above.';
+                    trigger OnValidate()
                     begin
-                        rec.AssemblyChange := runAssemblyList(false, optionRec);
+                        rec.Modify(true);
+                        updateControl();
+                    end;
+                }
+                field(PriceChange; Rec.PriceChange)
+                {
+                    ApplicationArea = All;
+                    Enabled = rec.Designator <> '';
+                    Caption = 'Price Change';
+                    BlankZero = true;
+                    trigger OnValidate()
+                    begin
+                        rec.Modify(true);
+                        CurrPage.Update(false);
+                    end;
+                }
+                field(atFront; Rec.atFront)
+                {
+                    ApplicationArea = All;
+                    Enabled = rec.Designator <> '';
+                    Caption = 'Add to Front of Part Number';
+                    trigger OnValidate()
+                    begin
+                        rec.Modify(true);
+                        CurrPage.Update(false);
                     end;
                 }
                 field("Active"; Rec.show)
                 {
                     ApplicationArea = All;
-                    Enabled = (Rec."Suffix Designator" <> '');
+                    Enabled = (Rec."Designator" <> '');
+                    Caption = 'Show in Preview';
                     trigger OnValidate()
                     var
-                        sRec: Record "Option Suffix";
-                        sl: Record SPList;
+                        sRec: Record "Option Designators";
                     begin
-                        // MyModalPage.addFromCurrentRec(rec);
-                        sRec.Reset();
-                        sRec.SetFilter(OptionID, Format(rec.OptionID));
-                        sRec.SetRange(show, true);
-                        if rec.show then begin
 
-                            if sRec.FindSet() then begin
-                                repeat
-                                    if sRec."Suffix Designator" <> rec."Suffix Designator" then begin
-                                        sRec.show := false;
-                                        if sRec.Modify() then begin
-                                            if sl.Get(Format(sRec.OptionID) + sRec."Suffix Designator") then begin
-                                                sl.active := false;
-                                                sl.Modify();
-                                            end;
-                                        end;
-                                    end;
-                                until sRec.Next() = 0;
-                            end;
-                        end;
-
-                        addToList();
-                        CurrPage.CombinedControl.updateValues(MyModalPage.getPreText(optionRec.Id), MyModalPage.getSufText(optionRec.Id));
+                        rec.Modify(true);
+                        CurrPage.Update(false);
 
                     end;
+                }
+                field("Variable"; Rec.variable)
+                {
+                    ApplicationArea = All;
+                    Enabled = rec.Designator <> '';
+                    Caption = 'Variable';
+                    trigger OnValidate() begin
+                        Message('Make sure that the variable part of this option will not effect the assembly BOM. Use a capital X to designate the variable parts of the part number.');
+                    end;
+
                 }
                 field(OptionID; Rec.OptionID)
                 {
                     ApplicationArea = All;
+                    TableRelation = Option.Id;
+                    Visible = false;
 
                 }
+                field("AssemblyID"; assText)
+                {
+                    ApplicationArea = All;
+                    Enabled = rec.Designator <> '';
+                    Editable = false;
+                    DrillDown = true;
+                    DrillDownPageId = "Option Assembly List";
+                    trigger OnDrillDown()
+                    var
+                        o: Record Option;
+                    begin
+                        rec.AssemblyID := runAssemblyList();
+                    end;
+                }
             }
-
-
-
-
         }
     }
     actions
     {
+
         area(Processing)
         {
 
@@ -121,38 +169,124 @@ page 50118 "Option Suffixs"
     }
     trigger OnNewRecord(bxRec: Boolean)
     begin
-        if not tableSet then begin
-            createCustomTable();
-            updateControl();
 
-            tableSet := true;
+        if rec.Id = 0 then begin
+            rec.Id := rec.getNewId();
+            rec.OptionID := optionRec.Id;
         end;
 
     end;
+
+    trigger OnOpenPage()
+    var
+        d: Record "Option Designators";
+    begin
+
+        // if not tableSet then begin
+        //     createCustomTable();
+        //     updateControl();
+        //     tableSet := true;
+        // end;
+        // d.Reset();
+        // d.SetFilter(OptionID, Format(optionRec.Id));
+        // if not d.FindFirst() then begin
+        //     rec.Init();
+        //     rec.Id := rec.getNewId();
+        //     rec.OptionID := optionRec.Id;
+        //     rec.Insert(false);
+        // end;
+        assText := 'Open';
+    end;
+
+
+    trigger OnAfterGetCurrRecord()
+    begin
+
+        createCustomTable();
+        updateControl();
+
+
+    end;
+
+    trigger OnModifyRecord(): Boolean
+    begin
+
+        // Message('OnModifyRecord');
+
+        updateControl();
+
+        exit(true);
+    end;
+    // procedure getText(oId: Integer; front: Boolean): text[500]
+    // var
+    //     pre: text[10];
+    //     po: Integer;
+    //     oRec: Record Option;
+    //     sl: Record "Option Designators";
+    //     added: Boolean;
+    // begin
+    //     PrefixField := '';
+    //     SuffixField := '';
+    //     sl.SetFilter(show, Format(front));
+    //     if sl.FindSet() then begin
+    //         repeat
+    //             if sl.atFront = front then begin
+    //                 PrefixField := sl.Designator + PrefixField;
+    //             end else begin
+    //                 SuffixField += sl.Designator;
+    //             end;
+    //         until sl.Next() = 0;
+
+    //     end;
+    //     // Message('%1', PrefixField);
+    //     if front then
+    //         exit(PrefixField)
+    //     else
+    //         exit(SuffixField);
+    // end;
 
     procedure toggleCN()
     begin
         CurrPage.CombinedControl.toggleCN();
     end;
 
+    procedure getID(): Integer
+    begin
+        exit(rec.ID);
+    end;
+
     procedure updateControl()
     begin
-
-        if tableSet then begin
-
-            CurrPage.CombinedControl.updateValues(MyModalPage.getPreText(optionRec.Id), MyModalPage.getSufText(optionRec.Id));
-            Clear(MyModalPage);
-        end;
+        CurrPage.CombinedControl.updateValues(MyModalPage.getText(optionRec.Id, true), MyModalPage.getText(optionRec.Id, false));
+        Clear(MyModalPage);
+        CurrPage.Update(false);
     end;
+
+    // procedure initialize(o: Record Option)
+    // var
+    //     d: Record "Option Designators";
+    // begin
+    //     d.Reset();
+    //     d.SetFilter(OptionID, Format(o.Id));
+    //     if not d.FindFirst() then begin
+    //         rec.Init();
+    //         rec.Id := rec.getNewId();
+    //         if optionRec.Id <> 0 then begin
+    //             rec.OptionID := optionRec.Id;
+    //         end;
+    //         rec.Insert(false);
+    //     end;
+    //     assText := 'Open';
+    // end;
 
     procedure createCustomTable()
     var
-        oRec: Record Option;
-        sRec: Record "Option Suffix";
     begin
-
-        CurrPage.CombinedControl.addControl();
-
+        if not tableSet then begin
+            CurrPage.CombinedControl.addControl();
+            MyModalPage.setOptionId(optionRec.Id);
+            tableSet := true;
+        end;
     end;
 
     procedure setTableSet()
@@ -164,38 +298,41 @@ page 50118 "Option Suffixs"
     var
     begin
         optionRec := o;
+        rec.OptionID := o.Id;
+
+
     end;
 
-    procedure addToList()
-    var
-        SPRec, sp : Record SPList;
-        sRec: Record "Option Suffix";
-        LastID: Integer;
-    begin
-        SPRec.Reset();
-        SPRec.SetFilter(OptionID, Format(rec.OptionID));
-        SPRec.SetFilter(Designator, rec."Suffix Designator");
-        if SPRec.FindFirst() then begin
-            SPRec.Designator := rec."Suffix Designator";
-            SPRec.Order := optionRec."Prefix Order";
-            SPRec.active := rec.show;
-            SPRec.prefix := false;
-            SPRec.Modify();
-        end else begin
-            SPRec.Init();
-            SPRec.ID := rec.getNewId();
-            SPRec.Designator := rec."Suffix Designator";
-            SPRec.Order := optionRec."Prefix Order";
-            SPRec.active := rec.show;
-            SPRec.prefix := false;
-            SPRec.OptionID := optionRec.Id;
-            if not SPRec.Insert() then begin
+    // procedure addToList()
+    // var
+    //     SPRec, sp : Record SPList;
+    //     sRec: Record "Option Designators";
+    //     LastID: Integer;
+    // begin
+    //     SPRec.Reset();
+    //     SPRec.SetFilter(OptionID, Format(rec.OptionID));
+    //     SPRec.SetFilter(Designator, rec."Designator");
+    //     if SPRec.FindFirst() then begin
+    //         SPRec.Designator := rec."Designator";
+    //         // SPRec.Order := optionRec."Prefix Order";
+    //         SPRec.active := rec.show;
+    //         SPRec.inFront := false;
+    //         SPRec.Modify();
+    //     end else begin
+    //         SPRec.Init();
+    //         SPRec.ID := rec.getNewId();
+    //         SPRec.Designator := rec."Designator";
+    //         // SPRec.Order := optionRec."Prefix Order";
+    //         SPRec.active := rec.show;
+    //         SPRec.inFront := false;
+    //         SPRec.OptionID := optionRec.Id;
+    //         if not SPRec.Insert() then begin
 
-            end;
-        end;
+    //         end;
+    //     end;
 
-        updateControl();
-    end;
+    //     updateControl();
+    // end;
 
     procedure getArecID(): Integer
     var
@@ -208,83 +345,39 @@ page 50118 "Option Suffixs"
         end;
     end;
 
-    procedure runAssemblyList(pre: Boolean; oRec: Record Option): Integer
+    procedure runAssemblyList(): Integer
     var
         OAPage: Page "Option Assembly List";
-        ARec: Record "Option Assembly Line";
+        ARec, a : Record "Option Assembly Line";
     begin
-        ARec.Reset();
-        ARec.SetFilter("Option ID", Format(oRec.Id));
-        if pre then begin
-            ARec.SetRange(Designator, oRec."Prefix Designator");
-            if ARec.FindFirst() then begin
-                OAPage.SetTableView(ARec);
-            end else begin
-                ARec.Init();
-                ARec.ID := getArecID();
-                ARec."Option ID" := oRec.Id;
-                ARec."Line No." := 1;
-                ARec.Designator := oRec."Prefix Designator";
-                ARec.Insert();
-                OAPage.SetTableView(ARec);
-            end;
-
-        end else begin
-            ARec.SetRange(Designator, rec."Suffix Designator");
-            if ARec.FindFirst() then begin
-                OAPage.SetTableView(ARec);
-
-            end else begin
-                ARec.Init();
-                ARec.ID := getArecID();
-                ARec."Option ID" := oRec.Id;
-                ARec.Designator := rec."Suffix Designator";
-                ARec."Line No." := 1;
-                ARec.Insert();
-                OAPage.SetTableView(ARec);
-            end;
-        end;
-        if not pre then
-            rec.AssemblyChange := ARec.ID;
         Commit();
-        if OAPage.RunModal = Action::OK then begin
-            exit(ARec.ID);
+        ARec.Reset();
+        ARec.SetRange(DesID, rec.ID);
+        ARec.SetFilter("Option ID", Format(rec.OptionID));
+        OAPage.setRecs(rec);
+        OAPage.SetTableView(ARec);
+        if OAPage.RunModal() = Action::OK then begin
+            OAPage.Update();
         end;
+        exit(OAPage.getID());
+
     end;
 
-    procedure updateOrder()
-    var
+    // procedure updateOrder()
+    // var
 
-        sRec: Record "Option Suffix";
-        sl: Record SPList;
-    begin
-        if rec."Suffix Order" <> optionRec."Suffix Order" then begin
-            sRec.Reset();
-            sRec.SetFilter(OptionID, Format(rec.OptionID));
-            if sRec.FindSet() then begin
-                repeat
-                    sRec."Suffix Order" := optionRec."Suffix Order";
-                    sRec.show := false;
-                    sRec.Modify();
-                    sl.SetFilter(OptionID, format(sRec.OptionID));
-                    sl.SetRange(Designator, sRec."Suffix Designator");
-                    if sl.FindFirst() then begin
-                        sl.Order := optionRec."Suffix Order";
-                        sl.active := false;
-                        sl.Modify();
-                    end;
-                until sRec.Next() = 0;
-            end;
-            updateControl();
-        end;
+    //     sRec: Record "Option Designators";
+    //     sl: Record SPList;
+    // begin
 
-    end;
+
+    // end;
 
     var
         optionRec: Record Option;
-        TempRec: Record SPList temporary;
+        PrefixField, SuffixField : Text[500];
         tableSet, f : Boolean;
-        MyModalPage: Page "SPList";
-
+        MyModalPage: Page SPList;
+        assText: Text[10];
 
 }

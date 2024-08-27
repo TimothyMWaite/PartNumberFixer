@@ -1,443 +1,485 @@
 pageextension 50103 SalesQuoteSubformExt extends "Sales Quote Subform"
 {
-    //TODO: Update captions, test more assembly option items, Add comments
     layout
     {
         addbefore("Type")
         {
-            field(lineNo; rec."Line No.")
+            field(LineNumber; Rec."Line No.")
             {
-                ApplicationArea = all;
+                ApplicationArea = All;
             }
-            field(PartNo; Rec.PartNo)
+
+            field(PartNumber; Rec.PartNumber)
             {
-                ApplicationArea = ALL;
+                ApplicationArea = All;
                 Caption = 'Part Number';
                 AssistEdit = false;
-
+                ToolTip = 'This is a custom field and can be edited as needed. Any changes will not affect the default part number and will only be saved in this document. If you need to change the default part number, go to the item page and do it there.';
                 DrillDown = true;
                 Lookup = true;
                 DrillDownPageId = OptionLineList;
                 LookupPageId = "Intermediary Part List";
                 TableRelation = "Intermediary Part Table";
-                trigger OnValidate()
+
+                trigger OnAfterLookup(Selected: RecordRef)
                 var
-                    UpdateSalesLineFields: Codeunit UpdateSalesLineFields;
-                    sHead: Record "Sales Order Entity Buffer";
-                    ioRec: Record "Item Option Line";
-                    slRec, badRec : Record "Sales Line";
+                    SalesLineRecord: Record "Sales Line";
                 begin
-                    Message('%1', rec.PartNo);
-                    UpdateSalesLineFields.UpdateFieldsOnPartNoChange(Rec);
-                    if sHead.Get(rec."Document No.") then begin
-                        if (sHead."Bill-to Customer No." <> '') then begin
-                            if (rec."Bill-to Customer No." = '') then begin
-                                rec.Validate("Bill-to Customer No.", sHead."Bill-to Customer No.");
-                                hRec := sHead;
-                            end;
-                        end;
-                    end;
-
-                    if rec."Line No." <> 0 then begin
-                        rec.Modify(true);
-                    end else begin
-                        slRec.Reset();
-                        slRec.SetRange("Document No.", rec."Document No.");
-                        if slRec.FindLast() then begin
-                            Message('r: %1 sl: %2', rec."Line No.", slRec."Line No.");
-                            rec."Line No." := slRec."Line No." + 10000;
-                        end else begin
-                            rec."Line No." := 10000;
-                        end;
-                        ioRec.Reset();
-                        ioRec.SetFilter("ItemNo.", rec."No.");
-                        if rec.Insert(ioRec.FindFirst()) then begin
-                            ioRec.Reset();
-                            ioRec.SetFilter("ItemNo.", rec."No.");
-                            if ioRec.FindFirst() then begin
-                                openPickPage();
-                            end;
-                        end;
-                    end;
-
-
-                    CurrPage.Update(false);
-                end;
-
-                // UpdateSalesLineFields.UpdateFields(Rec, xRec, ((xRec."No." = '') and (xRec.PartNo = '')));
-
-                trigger OnDrillDown()
-                var
-                    UpdateSalesLineFields: Codeunit UpdateSalesLineFields;
-                    sHead: Record "Sales Order Entity Buffer";
-                    ioRec: Record "Item Option Line";
-                begin
-                    ioRec.Reset();
-                    ioRec.SetFilter("ItemNo.", rec."No.");
-                    if ioRec.FindFirst() then begin
-                        openPickPage();
-                    end;
-
-                end;
-
-                trigger OnAssistEdit()
-                var
-                    ItemRec: Record Item;
-                    IntermediaryPartRec: Record "Intermediary Part Table";
-                    UpdateSalesLineFields: Codeunit UpdateSalesLineFields;
-                begin
-
-                    CurrPage.Update;// Force a page update
+                    // Update the line number after lookup
+                    UpdateLineNumber();
                     exit;
                 end;
 
+                trigger OnValidate()
+                var
+                    SalesLineUpdater: Codeunit UpdateSalesLineFields;
+                    PartNumberManager: Codeunit PartNoManager;
+                    SalesQuoteBuffer: Record "Sales Quote Entity Buffer";
+                    SalesLineRecord, BadSalesLineRecord : Record "Sales Line";
+                    OptionLineRecord: Record "OptionLine";
+                    ItemRecord: Record Item;
+                    BasePartNumber: Text[100];
+                    PickInstructionReport: Report "Pick Instruction";
+                begin
+                    // Delete the record if PartNumber is empty
+                    if Rec.PartNumber = '' then begin
+                        Rec.Delete();
+                        exit;
+                    end;
 
+                    // Set the "Bill-to Customer No." if it's not set yet
+                    if SalesQuoteBuffer.Get(Rec."Document No.") then begin
+                        if SalesQuoteBuffer."Bill-to Customer No." <> '' then begin
+                            if Rec."Bill-to Customer No." = '' then begin
+                                Rec.Validate("Bill-to Customer No.", SalesQuoteBuffer."Bill-to Customer No.");
+                            end;
+                        end;
+                    end;
+
+                    // Set a default shipment number if it's not set
+                    if Rec.ShipmentNumber = 0 then begin
+                        Rec.ShipmentNumber := 1;
+                    end;
+
+                    // Update item fields based on the selected PartNumber
+                    ItemRecord.Reset();
+                    ItemRecord.SetFilter(PartNumber, Rec.PartNumber);
+                    if ItemRecord.FindFirst() then begin
+                        Rec."No." := ItemRecord."No.";
+                        Rec.Description := ItemRecord.Description;
+                        Rec."Unit of Measure" := ItemRecord."Unit of Measure Id";
+                        Rec."Unit Price" := ItemRecord."Unit Price";
+                        Rec.Validate("No.", ItemRecord."No.");
+
+                        // Insert or modify the record if a new item has been selected
+                        if (ItemRecord.PartNumber <> BasePartNumber) OR (Rec."Line No." <> OldLineNumber) then begin
+                            Rec.PartNumber := ItemRecord.PartNumber;
+                            if not Rec.Insert(true) then begin
+                                Rec.Modify(false);
+                            end;
+                            if ItemRecord.opts then begin
+                                CurrentPartNumber := OpenPickPage();
+                            end;
+                        end;
+                    end;
+
+                    // Update the page to reflect changes
+                    CurrPage.Update(false);
+                    BasePartNumber := Rec.GetItem().PartNumber;
+                    OldLineNumber := Rec."Line No.";
+                end;
+
+                trigger OnDrillDown()
+                begin
+                    // If the item has options, open the pick page to select an option
+                    if Rec.GetItem().opts then begin
+                        Rec.PartNumber := OpenPickPage();
+                        CurrentPartNumber := Rec.PartNumber;
+                        CurrPage.Update(false);
+                    end;
+                end;
+
+                trigger OnAssistEdit()
+                begin
+                    // Force a page update during AssistEdit
+                    CurrPage.Update;
+                    exit;
+                end;
             }
 
+            field(LeadTime; Rec.LeadTime)
+            {
+                ApplicationArea = All;
+                Caption = 'Lead Time';
+                Visible = Rec."Document Type" = Rec."Document Type"::Quote;
+
+                trigger OnValidate()
+                var
+                    RegEx: Codeunit Regex;
+                begin
+                    // Update ship date based on lead time if the document type is Order
+                    if Rec."Document Type" = Rec."Document Type"::Order then begin
+                        if Rec.LeadTime <> '' then begin
+                            UpdateShipDateByLeadTime();
+                        end;
+                    end;
+                end;
+            }
+
+            field(ShipmentNumber; Rec.ShipmentNumber)
+            {
+                ApplicationArea = All;
+                Caption = 'Shipment Number';
+                Visible = Rec."Document Type" = Rec."Document Type"::Order;
+                Enabled = Rec.PartNumber <> '';
+
+                trigger OnValidate()
+                var
+                    SplitTravelerHandler: Record "SplitTravelerHandler";
+                begin
+                    // Set default shipment number and validate it
+                    if Rec.ShipmentNumber = 0 then begin
+                        Rec.ShipmentNumber := 1;
+                    end;
+                    if Rec.GetSalesHeader().TotalNumberOfShipments < Rec.ShipmentNumber then begin
+                        Rec.Validate(Rec.ShipmentNumber, Rec.GetSalesHeader().TotalNumberOfShipments);
+                    end;
+                    SplitTravelerHandler.CreateRecords(Rec); // Create records based on the shipment number
+                end;
+            }
         }
+
         modify("No.")
         {
             trigger OnAfterValidate()
             var
-                UpdateSalesLineFields: Codeunit UpdateSalesLineFields;
+                SalesLineUpdater: Codeunit UpdateSalesLineFields;
             begin
-                UpdateSalesLineFields.UpdateFieldsOnNoChange(Rec, xRec);
+                // Update fields after validating the "No." field
+                SalesLineUpdater.UpdateFieldsOnNoChange(Rec, xRec);
             end;
         }
+
         modify("Description")
         {
             trigger OnAfterValidate()
             var
-                UpdateSalesLineFields: Codeunit UpdateSalesLineFields;
+                SalesLineUpdater: Codeunit UpdateSalesLineFields;
             begin
-                UpdateSalesLineFields.UpdateFieldsOnDescChange(Rec, xRec);
+                // Update fields after validating the "Description" field
+                SalesLineUpdater.UpdateFieldsOnDescChange(Rec, xRec);
             end;
         }
+
+        modify("Quantity")
+        {
+            trigger OnAfterValidate()
+            begin
+                // Set the "Qty. to Assemble to Order" field if the item has a BOM
+                if Rec.GetItem().HasBOM() then begin
+                    Rec."Qty. to Assemble to Order" := Rec.Quantity;
+                    Rec.Modify(false);
+                    Rec.Validate("Qty. to Assemble to Order");
+                end;
+            end;
+        }
+
         modify("Qty. to Assemble to Order")
         {
             trigger OnBeforeValidate()
-
             begin
-
-
+                // Placeholder for logic before validating "Qty. to Assemble to Order"
             end;
 
             trigger OnAfterValidate()
-            var
-                dR2: Record "Assembly Line";
             begin
-                // dR2.SetFilter("Document Type", Format(Rec."Document Type"));
-                // dR2.SetFilter("Document No.", Format(Rec."Document No."));
-                // dR2.SetFilter("Line No.", Format(Rec."Line No."));
-                // if dR2.FindSet() then begin
-                //     repeat
-                //         Message('docNO: %1 /No: %2 /From: %3 /To: %4', dR2."Document No.", dR2."No.", dR2."Appl.-from Item Entry", dR2."Appl.-to Item Entry");
-                //     until dR2.Next() = 0;
-                // end;
-
-
-                updateAssemblyInfo();
-
+                // Update assembly information after validating "Qty. to Assemble to Order"
+                UpdateAssemblyInfo();
             end;
         }
-
-
     }
-    actions
-    {
-        addafter(Page)
-        {
-            group(DOIT)
-            {
-                action(DOTHETHING)
-                {
-                    Visible = true;
-                    ApplicationArea = All;
-                    Caption = 'DO THE THING';
-                    trigger OnAction()
-                    var
-                        dR2: Record "Assemble-to-Order Link";
-                        dR1: Record "Assembly Line";
-                    begin
 
-                        if dR2.FindSet() then begin
-                            repeat
-
-                                Message('%1', dR2);
-                                dR1.Reset();
-                            until dR2.Next() = 0;
-                        end;
-                        dR2.Reset();
-
-                        // dRec.SetFilter("Document No.", rec."Document No.");
-                        // dRec.SetRange("Line No.", rec."Line No.");
-
-                        // if dR2.FindSet() then begin
-                        //     repeat
-                        //         Message('%1', dR2);
-                        //         if CopyStr(dR2."No.", 1, 1) = 'S' then begin
-                        //             dR2.Delete();
-                        //         end;
-                        //     until dR2.Next() = 0;
-                        // end;
-                    end;
-                }
-            }
-        }
-    }
+    trigger OnClosePage()
+    var
+        SalesLineRecord: Record "Sales Line";
+    begin
+        // Delete lines with empty PartNumber and of type "Item"
+        SalesLineRecord.SetFilter("Document No.", Rec."Document No.");
+        SalesLineRecord.SetRange("Line No.", 10000);
+        if SalesLineRecord.FindFirst() then begin
+            if (SalesLineRecord.PartNumber = '') AND (SalesLineRecord.Type = "Sales Line Type"::Item) then begin
+                SalesLineRecord.Delete();
+            end;
+        end;
+        if (Rec.PartNumber = '') AND (SalesLineRecord.Type = "Sales Line Type"::Item) AND (Rec."Line No." <> 0) then begin
+            Rec.Delete();
+        end;
+    end;
 
     trigger OnInsertRecord(BelowxRec: Boolean): Boolean
-    var
-        ioRec: Record "Item Option Line";
     begin
-        if ((rec."Line No." / 5000) mod 2) = 1 then
+        // Prevent insertion if the line number is odd (and not divisible by 5000)
+        if ((Rec."Line No." / 5000) mod 2) = 1 then begin
             exit(false);
-        Message('%1', rec."Line No.");
-        ioRec.Reset();
-        ioRec.SetFilter("ItemNo.", rec."No.");
-        if ioRec.FindFirst() then begin
-            openPickPage();
         end;
+        exit(true);
+    end;
+
+    trigger OnDeleteRecord(): Boolean
+    var
+        ItemRecord: Record Item;
+        OptionLineRecord: Record "OptionLine";
+    begin
+        // Delete option lines related to the current item if it has options
+        BasePartNumber := '';
+        if Rec."No." <> '' then begin
+            ItemRecord := Rec.GetItem();
+            if ItemRecord.opts then begin
+                if ItemRecord.PartNumber <> Rec.PartNumber then begin
+                    OptionLineRecord.Reset();
+                    OptionLineRecord.SetFilter(DocumentID, Rec."Document No.");
+                    OptionLineRecord.SetRange(LineNumber, Rec."Line No.");
+                    if OptionLineRecord.FindSet() then begin
+                        repeat
+                            OptionLineRecord.Delete();
+                        until OptionLineRecord.Next() = 0;
+                    end;
+                end;
+            end;
+        end;
+        exit(true);
     end;
 
     trigger OnAfterGetRecord()
-    var
-        ioRec: Record "Item Option Line";
-        olRec: Record "OptionLine";
-        iRec: Record item;
-        p, s : Text[50];
-
     begin
-        p := '';
-        s := '';
-
-        ioRec.Reset();
-        ioRec.SetFilter("ItemNo.", rec."No.");
-        if ioRec.FindSet() then begin
-            olRec.Reset();
-            olRec.SetFilter(docID, rec."Document No.");
-            olRec.SetRange(line, rec."Line No.");
-            olRec.SetCurrentKey(sufOrder, preOrder);
-            olRec.SetAscending(sufOrder, true);
-            olRec.SetAscending(preOrder, true);
-            if olRec.FindSet() then begin
-                s += olRec.sufSelection;
-                p += olRec.preSelection;
-            end;
-
-        end;
-        if iRec.get(rec."No.") then begin
-            rec.PartNo := p + iRec.PartNo + s;
-        end;
-        CurrPage.Update(false);
+        // Placeholder for operations after getting the record
     end;
-
-    // trigger OnModifyRecord(): Boolean
-    // var
-    //     ioRec: Record "Item Option Line";
-
-    // begin
-    //     ioRec.Reset();
-    //     ioRec.SetFilter("ItemNo.", rec."No.");
-    //     if ioRec.FindFirst() then begin
-    //         openPickPage();
-    //     end;
-    // end;
-
-
 
     local procedure CreateDisplayText(FieldName: Text; Value1: Text; Value2: Text): Text
     begin
+        // Create display text combining field name and values
         exit(StrSubstNo('%1 -> Record1: %2, Record2: %3', FieldName, Value1, Value2));
     end;
 
-    procedure openPickPage(): Text[100]
+    local procedure NextNonWeekend(CalculationDate: Date): Date
     var
-        lRec, ol, fpg : Record OptionLine;
-        sRec: Record SPList;
-        iRec: Record Item;
-        p: Decimal;
-        ioRec: Record "Item Option Line";
-        slRec: Record "Sales Line";
-        opPage: Page OptionLineList;
-        pn: Text[200];
+        DayOfWeek: Integer;
     begin
-        // Message('lN: %1', rec."Line No.");
-        ioRec.Reset();
-        ioRec.SetFilter("ItemNo.", rec."No.");
-        ol.Reset();
-        ol.SetFilter(docID, rec."Document No.");
-        // ol.SetRange(iID, rec."No.");
-        ol.SetRange(line, rec."Line No.");
-        if not ol.FindSet() then begin
-            if ioRec.FindSet() then begin
-                repeat
-                    lRec.Reset();
-                    lRec.Init();
-                    lRec.docID := rec."Document No.";
-                    lRec.Id := lRec.getNewID();
-                    lRec.iID := ioRec."ItemNo.";
-                    lRec.oID := ioRec.OptionID;
-                    lRec.pre := ioRec.pre;
-                    lRec.priceCh := ioRec."Price Change";
-                    lRec.oName := ioRec.OptionName;
-                    lRec.pn := rec.PartNo;
-                    lRec.line := rec."Line No.";
-                    lRec.Insert();
-                // Message('lrLN: %1', lRec.line);
-                until ioRec.Next() = 0;
-            end;
+        // Calculate the next non-weekend date
+        DayOfWeek := Date2DWY(CalculationDate, 1);
+        if DayOfWeek = 6 then begin
+            exit(CalcDate('+2D', CalculationDate));
+        end else if DayOfWeek = 7 then begin
+            exit(CalcDate('+1D', CalculationDate));
+        end else begin
+            exit(CalculationDate);
         end;
-        lRec.Reset();
-        // lRec.SetRange(iID, rec."No.");
+    end;
 
-        opPage.SetTableView(ol);
-        // Message('Filters: %1', ol.GetFilters);
-        opPage.setI(rec);
+    procedure OpenPickPage(): Text[100]
+    var
+        OptionLineRecord, OptionLineRecordCopy, TempOptionLine : Record OptionLine;
+        ItemRecord: Record Item;
+        SalesLineRecord: Record "Sales Line";
+        PickPage: Page SalesLineItem;
+        AssemblyManager: Codeunit AssemblyManagement;
+        PartNumber: Text[200];
+    begin
+        // Open a modal page to pick an option and return the selected part number
         Commit();
-        if opPage.RunModal() = Action::OK then begin
-
-
-
-            CurrPage.Update(false);
-            // Clear(opPage);
-        end;
-
-        // rec.validate("Unit Price");
-        p := getNewUnitCost();
-        rec.UpdateUnitPrice(p);
+        PickPage.SetRecord(Rec);
+        PickPage.RunModal();
+        exit(PickPage.GetPN());
     end;
 
-    procedure getNewUnitCost(): Decimal
+    procedure UpdateAssemblyInfo()
     var
-        oRec: Record "OptionLine";
-        pr: Decimal;
-        pag: Page "Sales Quote Subform";
+        OptionAssemblyLineRecord: Record "Option Assembly Line";
+        AssemblyHeaderRecord, AssemblyHeaderCopy : Record "Assembly Header";
+        OptionLineRecord: Record OptionLine;
+        SalesHeaderRecord: Record "Sales Header";
+        AssemblyLineRecord: Record "Assembly Line";
+        IsDeleted: Boolean;
+        ItemRecord: Record Item;
+        AssembleToOrderLinkRecord: Record "Assemble-to-Order Link";
+        AssemblyManager: Codeunit AssemblyManagement;
     begin
-        pr := 0;
-        pr := pr + rec."Unit Price";
-        Message('1: %1', rec."Unit Price");
-        oRec.Reset();
-        oRec.SetFilter(iID, rec."No.");
-        oRec.SetFilter(docID, rec."Document No.");
-        oRec.SetRange(line, rec."Line No.");
-        if oRec.FindSet() then begin
-            repeat
-                if (oRec.preSelection <> '') OR (oRec.sufSelection <> '') then begin
-                    pr += oRec.priceCh;
-                    Message('%1', oRec.priceCh);
-                end;
-            until oRec.Next() = 0;
-        end;
+        // Update assembly header and lines based on the current sales line data
+        OptionAssemblyLineRecord.Reset();
+        OptionLineRecord.Reset();
+        AssemblyHeaderRecord.Reset();
 
-        exit(pr);
-    end;
-
-    procedure addAssLine()
-    var
-        AssemblyHeader: Record "Assembly Header";
-        AssemblyLine: Record "Assembly Line";
-        ALMgt: Codeunit "Assembly Line Management";
-        ahu: Codeunit "Assembly Header-Reserve";
-    begin
-        // Initialize or retrieve your AssemblyHeader record
-        // ...
-
-        // Insert a new line for the Assembly Header
-        ALMgt.InsertAsmLine(AssemblyHeader, AssemblyLine, false);
-
-        // Set the details of the new assembly line
-        // AssemblyLine.Validate("No.", YourItemNo); // Replace YourItemNo with the actual item number
-        // AssemblyLine.Validate(Quantity, YourQuantity); // Replace YourQuantity with the actual quantity
-        // Set other fields as needed
-        // ...
-
-        // Insert the assembly line record into the database
-        AssemblyLine.Insert();
-    end;
-
-    procedure updateAssemblyInfo()
-    var
-        aRec: Record "Option Assembly Line";
-        hRec, head : Record "Assembly Header";
-        lRec: Record OptionLine;
-        ioRec: Record "Item Option Line";
-        shRec: Record "Sales Header";
-        dRec, c, dRec2 : Record "Assembly Line";
-        ALMgt: Codeunit "Assembly Line Management";
-        bStr: Text[1];
-        iNo: Code[20];
-        iRec: Record Item;
-        atoRec: Record "Assemble-to-Order Link";
-        p: Page "Assemble-to-Order Lines";
-        am: Codeunit AssemblyManagement;
-    begin
-        bStr := '';
-        aRec.Reset();
-        lRec.Reset();
-        head.Reset();
-
-        atoRec.SetFilter("Document No.", rec."Document No.");
-        atoRec.SetRange("Document Line No.", rec."Line No.");
-        if atoRec.FindFirst() then begin
-            if head.get(atoRec."Assembly Document Type", atoRec."Assembly Document No.") then begin
-
-                hRec := head;
+        AssembleToOrderLinkRecord.SetFilter("Document No.", Rec."Document No.");
+        AssembleToOrderLinkRecord.SetRange("Document Line No.", Rec."Line No.");
+        if AssembleToOrderLinkRecord.FindFirst() then begin
+            if AssemblyHeaderRecord.Get(AssembleToOrderLinkRecord."Assembly Document Type", AssembleToOrderLinkRecord."Assembly Document No.") then begin
+                AssemblyHeaderCopy := AssemblyHeaderRecord;
             end else begin
-
-                // Initialize the Assembly Header record
-                hRec.Init();
-                hRec := am.setAssemblyHeaderValues(hRec, rec);
-                atoRec.InsertAsmHeader(hRec, rec."Document Type", hRec."No.");
-                // hRec.Insert();
+                AssemblyHeaderCopy.Init();
+                AssemblyHeaderCopy := AssemblyManager.SetAssemblyHeaderValues(AssemblyHeaderCopy, Rec);
+                AssembleToOrderLinkRecord.InsertAsmHeader(AssemblyHeaderCopy, Rec."Document Type", AssemblyHeaderCopy."No.");
             end;
         end else begin
-            atoRec.Init();
-            hRec.Init();
-            hRec := am.setAssemblyHeaderValues(hRec, rec);
-            atoRec := am.setAtoValues(atoRec, rec, hRec);
-            // hRec.Insert();
-            atoRec.InsertAsmHeader(hRec, rec."Document Type", hRec."No.");
-            atoRec.Insert();
+            AssembleToOrderLinkRecord.Init();
+            AssemblyHeaderCopy.Init();
+            AssemblyHeaderCopy := AssemblyManager.SetAssemblyHeaderValues(AssemblyHeaderCopy, Rec);
+            AssembleToOrderLinkRecord := AssemblyManager.SetAssembleToOrderValues(AssembleToOrderLinkRecord, Rec, AssemblyHeaderCopy);
+            AssembleToOrderLinkRecord.InsertAsmHeader(AssemblyHeaderCopy, Rec."Document Type", AssemblyHeaderCopy."No.");
+            AssembleToOrderLinkRecord.Insert(true);
         end;
-        lRec.SetFilter(docID, rec."Document No.");
-        lRec.SetRange(line, rec."Line No.");
-        if lRec.FindSet() then begin
+
+        OptionLineRecord.SetFilter(DocumentID, Rec."Document No.");
+        OptionLineRecord.SetRange(LineNumber, Rec."Line No.");
+        if OptionLineRecord.FindSet() then begin
             repeat
-                am.checkOptionRecs(lRec, aRec, dRec, hRec, rec);
-
-            until lRec.Next() = 0;
+                OptionAssemblyLineRecord.Reset();
+                OptionAssemblyLineRecord.SetRange(DesID, OptionLineRecord.PreID);
+                if OptionAssemblyLineRecord.FindSet() then begin
+                    repeat
+                        if OptionAssemblyLineRecord.ReplacePart then begin
+                            AssemblyManager.DeleteParts(AssemblyHeaderCopy, OptionAssemblyLineRecord, Rec);
+                        end;
+                    until OptionAssemblyLineRecord.Next() = 0;
+                end;
+                OptionAssemblyLineRecord.Reset();
+                OptionAssemblyLineRecord.SetRange(DesID, OptionLineRecord.SuffixID);
+                if OptionAssemblyLineRecord.FindSet() then begin
+                    repeat
+                        if OptionAssemblyLineRecord.ReplacePart then begin
+                            AssemblyManager.DeleteParts(AssemblyHeaderCopy, OptionAssemblyLineRecord, Rec);
+                        end;
+                    until OptionAssemblyLineRecord.Next() = 0;
+                end;
+            until OptionLineRecord.Next() = 0;
         end;
 
+        OptionLineRecord.Reset();
+        OptionLineRecord.SetFilter(DocumentID, Rec."Document No.");
+        OptionLineRecord.SetRange(LineNumber, Rec."Line No.");
+        if OptionLineRecord.FindSet() then begin
+            repeat
+                IsDeleted := false;
+                OptionAssemblyLineRecord.Reset();
+                OptionAssemblyLineRecord.SetRange(DesID, OptionLineRecord.SuffixID);
+                if OptionAssemblyLineRecord.FindSet() then begin
+                    repeat
+                        AssemblyManager.ConvertToAssemblyLine(AssemblyHeaderCopy, Rec, OptionAssemblyLineRecord);
+                    until OptionAssemblyLineRecord.Next() = 0;
+                end;
+                OptionAssemblyLineRecord.Reset();
+                OptionAssemblyLineRecord.SetRange(DesID, OptionLineRecord.PreID);
+                if OptionAssemblyLineRecord.FindSet() then begin
+                    repeat
+                        AssemblyManager.ConvertToAssemblyLine(AssemblyHeaderCopy, Rec, OptionAssemblyLineRecord);
+                    until OptionAssemblyLineRecord.Next() = 0;
+                end;
+            until OptionLineRecord.Next() = 0;
+        end;
     end;
 
-
-
-    procedure getPNwOpts()
+    procedure UpdateLineNumber()
     var
-        lRec: Record OptionLine;
+        SalesLineRecord: Record "Sales Line";
     begin
-        // lRec.SetFilter(docID, rec."Document No.");
-        // lRec.SetRange(line, rec."Line No.");
-        // lRec.SetRange(iID, rec."No.");
-        // if lRec.FindFirst() then begin
-        //     rec.PartNo := lRec.pn;
-        //     Message('%1', rec.PartNo);
-        // end;
+        // Update the line number if it's not set yet
+        if Rec."Line No." = 0 then begin
+            SalesLineRecord.Reset();
+            SalesLineRecord.SetRange("Document No.", Rec."Document No.");
+            if SalesLineRecord.FindLast() then begin
+                Rec."Line No." := SalesLineRecord."Line No." + 10000;
+            end else begin
+                Rec."Line No." := 10000;
+                Rec."Document Type" := Rec.GetSalesHeader()."Document Type";
+                Rec."Document No." := Rec.GetSalesHeader()."No.";
+                Rec.Insert();
+            end;
+        end;
     end;
 
-    procedure checkAvail(i: Record Item; q: Integer): Boolean
+    procedure ConvertLeadTimeToDate(LeadTimeText: Text): Date
+    var
+        UnitPosition: Integer;
+        DateFormula: Text;
     begin
+        // Convert lead time text to a date based on days or weeks
+        DateFormula := '';
+        UnitPosition := StrPos(UpperCase(LeadTimeText), 'D');
+        if UnitPosition > 0 then begin
+            DateFormula := StrSubstNo('+%1D', GetHighestNumberFromText(LeadTimeText));
+        end else begin
+            UnitPosition := StrPos(UpperCase(LeadTimeText), 'W');
+            if UnitPosition > 0 then begin
+                DateFormula := StrSubstNo('+%1W', GetHighestNumberFromText(LeadTimeText));
+            end;
+        end;
 
+        exit(NextNonWeekend(CalcDate(DateFormula, Variant2Date(CurrentDateTime))));
+    end;
+
+    procedure GetHighestNumberFromText(TextInput: Text): Integer
+    var
+        MaxNumber: Integer;
+        CurrentNumber: Integer;
+        NumberText: Text;
+        Character: Char;
+        i: Integer;
+    begin
+        // Extract the highest number from the text input
+        MaxNumber := 0;
+        NumberText := '';
+
+        for i := 1 to StrLen(TextInput) do begin
+            Character := TextInput[i];
+
+            if Character in ['0' .. '9'] then
+                NumberText := NumberText + Character
+            else begin
+                if NumberText <> '' then begin
+                    CurrentNumber := EvaluateNumber(NumberText);
+                    if CurrentNumber > MaxNumber then
+                        MaxNumber := CurrentNumber;
+                    NumberText := '';
+                end;
+            end;
+        end;
+
+        if NumberText <> '' then begin
+            CurrentNumber := EvaluateNumber(NumberText);
+            if CurrentNumber > MaxNumber then
+                MaxNumber := CurrentNumber;
+        end;
+
+        exit(MaxNumber);
+    end;
+
+    procedure EvaluateNumber(NumberText: Text): Integer
+    var
+        Number: Integer;
+    begin
+        // Convert text to integer
+        if Evaluate(Number, NumberText) then
+            exit(Number)
+        else
+            Error('Failed to evaluate number: %1', NumberText);
+    end;
+
+    procedure UpdateShipDateByLeadTime()
+    var
+        SalesLineRecord: Record "Sales Line";
+    begin
+        // Update the shipment date based on lead time
+        SalesLineRecord.SetFilter("Document No.", Rec."Document No.");
+        if SalesLineRecord.FindSet() then begin
+            repeat
+                SalesLineRecord."Shipment Date" := ConvertLeadTimeToDate(Rec.LeadTime);
+                SalesLineRecord.Modify();
+            until SalesLineRecord.Next() = 0;
+        end;
     end;
 
     var
-
-        opPage: Page OptionLineList;
-        oCU: Codeunit "OP Page Manager";
-        hRec: Record "Sales Order Entity Buffer";
-        p: Page "Assemble-to-Order Lines";
-        d: Record "Assembly Line";
-        d2: Record "Assembly Header";
+        OptionPage: Page OptionLineList;
+        CurrentPartNumber, PreviousPartNumber, BasePartNumber : Text[200];
+        OldLineNumber: Integer;
 
 }

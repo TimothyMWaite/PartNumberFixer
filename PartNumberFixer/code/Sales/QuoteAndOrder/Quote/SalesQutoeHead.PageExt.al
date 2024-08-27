@@ -1,27 +1,10 @@
-pageextension 50108 SalesQuoteHeadExt extends "Sales Quote"
+tableextension 50108 SalesQuoteHeadExt extends "Sales Header"
 {
-    layout
-    {
-        moveafter("Sell-to Customer Name"; "Your Reference")
-        moveafter("Your Reference"; "Work Description")
-        modify("Work Description")
+    fields{
+        field(50120; totalNumberOfShipments; Integer)
         {
-            Caption = 'Lead Time';
+            DataClassification = ToBeClassified;
         }
-        modify("Your Reference")
-        {
-            Caption = 'P.O. Number';
-        }
-        modify("Sell-to Customer No.")
-        {
-            trigger OnAfterValidate()
-            var
-            begin
-                rec."Quote Valid Until Date" := CalcDate('<90D>', Today());
-                Rec.Modify();
-                CurrPage.Update();
-            end;
-        }
-
     }
+
 }

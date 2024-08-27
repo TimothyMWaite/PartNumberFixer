@@ -4,7 +4,7 @@ pageextension 50105 SalesInvoiceSubformExt extends "Posted Sales Invoice Subform
     {
         addafter("Type")
         {
-            field(PartNo; Rec.PartNo)
+            field(PartNumber; Rec.PartNumber)
             {
                 ApplicationArea = ALL;
                 Caption = 'Part Number';
